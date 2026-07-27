@@ -14,6 +14,19 @@ require_once '../config/database.php';
 header('Content-Type: application/json');
 
 // ============================================
+// CHECK IF IT'S AN AJAX REQUEST
+// ============================================
+
+$isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+          strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+
+// If not AJAX, redirect on success
+if (!$isAjax) {
+    // Handle as normal form submission (redirect)
+    // ... (we'll keep this for backward compatibility)
+}
+
+// ============================================
 // GET POST DATA
 // ============================================
 
@@ -146,13 +159,21 @@ try {
     if ($result) {
         $booking_id = $pdo->lastInsertId();
         
-        // Store success message in session for redirect
+        // Get the newly created booking data
+        $get_sql = "SELECT * FROM bookings WHERE id = :id";
+        $get_stmt = $pdo->prepare($get_sql);
+        $get_stmt->execute([':id' => $booking_id]);
+        $new_booking = $get_stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Store success message in session
         $_SESSION['success'] = '✅ Booking created successfully!';
         
+        // Return JSON with the new booking data
         echo json_encode([
             'success' => true,
             'message' => '✅ Booking created successfully!',
             'booking_id' => $booking_id,
+            'booking' => $new_booking,
             'redirect' => '../index.php'
         ]);
     } else {
