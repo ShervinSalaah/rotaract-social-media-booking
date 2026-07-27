@@ -1,6 +1,6 @@
 // ============================================
 // ROTARACT SOCIAL MEDIA BOOKING APP
-// Custom JavaScript - Full Version with Debug
+// Custom JavaScript - Full Version
 // ============================================
 
 console.log('✅ script.js loaded successfully!');
@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     attachEventListeners();
     setupEditModal();
+    setupDateValidation();
     
     // Call renderCalendar
     console.log('📅 Calling renderCalendar()...');
@@ -37,6 +38,47 @@ document.addEventListener('DOMContentLoaded', function() {
     
     updateStats();
 });
+
+// ============================================
+// SETUP DATE VALIDATION
+// ============================================
+
+function setupDateValidation() {
+    const bookingDateInput = document.getElementById('bookingDate');
+    if (bookingDateInput) {
+        bookingDateInput.addEventListener('change', function() {
+            validateDateSelection(this);
+            checkAvailability();
+            updateTimeSlotOptions();
+        });
+    }
+    
+    const editDateInput = document.getElementById('editDate');
+    if (editDateInput) {
+        editDateInput.addEventListener('change', function() {
+            validateDateSelection(this);
+        });
+    }
+}
+
+// ============================================
+// VALIDATE DATE - PAST DATES RESTRICTION
+// ============================================
+
+function validateDateSelection(dateInput) {
+    const selectedDate = new Date(dateInput.value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to compare only dates
+    
+    if (selectedDate < today) {
+        dateInput.setCustomValidity('❌ You cannot select a past date. Please choose today or a future date.');
+        dateInput.reportValidity();
+        return false;
+    } else {
+        dateInput.setCustomValidity('');
+        return true;
+    }
+}
 
 // ============================================
 // SETUP EVENT LISTENERS
@@ -138,6 +180,17 @@ async function checkAvailability() {
         return;
     }
 
+    // Check if date is past
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+        statusEl.innerHTML = '❌ Cannot book past dates!';
+        statusEl.className = 'text-rose-400 text-sm mt-1 font-medium';
+        return;
+    }
+
     try {
         console.log(`🔍 Checking availability for ${date} - ${timeSlot}`);
         const response = await fetch(`api/check_availability.php?date=${date}&timeSlot=${encodeURIComponent(timeSlot)}`);
@@ -169,6 +222,14 @@ async function handleFormSubmit(e) {
     const form = e.target;
     const submitBtn = document.getElementById('submitBtn');
     const originalText = submitBtn.innerHTML;
+    
+    // Validate date
+    const dateInput = document.getElementById('bookingDate');
+    if (!validateDateSelection(dateInput)) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        return;
+    }
     
     // Show loading state
     submitBtn.disabled = true;
@@ -610,6 +671,12 @@ async function handleEditSubmit(e) {
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
     
+    // Validate date
+    const dateInput = document.getElementById('editDate');
+    if (!validateDateSelection(dateInput)) {
+        return;
+    }
+    
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
     
@@ -761,14 +828,14 @@ async function deleteBooking(id) {
 }
 
 // ============================================
-// CALENDAR FUNCTIONS - DEBUG VERSION
+// CALENDAR FUNCTIONS
 // ============================================
 
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 
 /**
- * Render the calendar with proper dates - DEBUG VERSION
+ * Render the calendar with proper dates
  */
 async function renderCalendar() {
     console.log('📅 renderCalendar() called!');

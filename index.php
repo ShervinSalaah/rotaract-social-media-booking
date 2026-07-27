@@ -198,6 +198,8 @@ include 'includes/header.php';
                 <i class="fas fa-calendar text-indigo-400 mr-1"></i> Date *
             </label>
             <input type="date" name="date" id="bookingDate" required
+                    min="<?php echo date('Y-m-d'); ?>"
+
                    class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
         </div>
         
@@ -491,6 +493,8 @@ include 'includes/header.php';
             <div>
                 <label class="block text-sm font-medium text-slate-400 mb-1">Date *</label>
                 <input type="date" name="date" id="editDate" required
+                        min="<?php echo date('Y-m-d'); ?>"
+
                        class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500">
             </div>
             <div>
