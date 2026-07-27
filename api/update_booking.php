@@ -10,7 +10,7 @@ session_start();
 // Include database configuration
 require_once '../config/database.php';
 
-// Set JSON response header (but we're redirecting)
+// Set JSON response header
 header('Content-Type: application/json');
 
 // ============================================
@@ -19,6 +19,7 @@ header('Content-Type: application/json');
 
 $data = json_decode(file_get_contents('php://input'), true);
 
+// If no JSON data, try POST data
 if (!$data) {
     $data = $_POST;
 }
@@ -61,16 +62,8 @@ $note = isset($data['note']) ? sanitize($data['note']) : '';
 $priority = isset($data['priority']) ? sanitize($data['priority']) : 'Medium';
 $status = isset($data['status']) ? sanitize($data['status']) : 'Pending';
 
-// Process platforms
-$platforms = isset($data['platforms']) ? $data['platforms'] : [];
-if (is_array($platforms)) {
-    $platforms_str = implode(',', array_map('sanitize', $platforms));
-} else {
-    $platforms_str = sanitize($platforms);
-}
-
 // ============================================
-// VALIDATE
+// VALIDATE EMAIL
 // ============================================
 
 if (!validateEmail($email)) {
@@ -82,11 +75,15 @@ if (!validateEmail($email)) {
     exit;
 }
 
+// ============================================
+// VALIDATE DATE
+// ============================================
+
 if (!validateDate($date)) {
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'error' => 'Invalid date format'
+        'error' => 'Invalid date format. Use YYYY-MM-DD'
     ]);
     exit;
 }
@@ -141,7 +138,6 @@ try {
             date = :date,
             time_slot = :time_slot,
             category = :category,
-            platforms = :platforms,
             note = :note,
             priority = :priority,
             status = :status
@@ -155,7 +151,6 @@ try {
         ':date' => $date,
         ':time_slot' => $time_slot,
         ':category' => $category,
-        ':platforms' => $platforms_str,
         ':note' => $note,
         ':priority' => $priority,
         ':status' => $status,
@@ -163,12 +158,18 @@ try {
     ]);
     
     if ($result) {
+        // Fetch updated booking data
+        $get_sql = "SELECT * FROM bookings WHERE id = :id";
+        $get_stmt = $pdo->prepare($get_sql);
+        $get_stmt->execute([':id' => $id]);
+        $updated_booking = $get_stmt->fetch(PDO::FETCH_ASSOC);
+        
         $_SESSION['success'] = '✅ Booking updated successfully!';
         echo json_encode([
             'success' => true,
             'message' => '✅ Booking updated successfully!',
             'id' => $id,
-            'redirect' => '../index.php'
+            'booking' => $updated_booking
         ]);
     } else {
         http_response_code(500);

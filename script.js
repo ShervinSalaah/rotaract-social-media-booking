@@ -66,6 +66,8 @@ async function updateTimeSlotOptions() {
         const options = timeSlotSelect.querySelectorAll('option');
         options.forEach(opt => {
             if (opt.value) opt.disabled = false;
+            // Remove any suffix
+            opt.textContent = opt.value.replace(' 🔴 Booked', '');
         });
         return;
     }
@@ -87,7 +89,6 @@ async function updateTimeSlotOptions() {
                     opt.textContent = opt.value + ' 🔴 Booked';
                 } else {
                     opt.disabled = false;
-                    // Remove the suffix if it was added
                     opt.textContent = opt.value.replace(' 🔴 Booked', '');
                 }
             }
@@ -307,15 +308,12 @@ async function updateStats() {
         const categories = [...new Set(bookings.map(b => b.category))];
         
         // Update stats cards
-        document.querySelector('.glass-card h2')?.textContent = total;
-        
-        // Find and update the other stats
         const statTexts = document.querySelectorAll('.glass-card .text-3xl');
-        if (statTexts.length >= 3) {
+        if (statTexts.length >= 4) {
             statTexts[0].textContent = total;
             statTexts[1].textContent = today;
             statTexts[2].textContent = pending;
-            if (statTexts[3]) statTexts[3].textContent = categories.length;
+            statTexts[3].textContent = categories.length;
         }
         
         console.log('📊 Stats updated');
@@ -455,63 +453,92 @@ function renderBookingsTable(bookings) {
 }
 
 // ============================================
-// OPEN EDIT MODAL
+// OPEN EDIT MODAL - FETCH DATA FROM SERVER
 // ============================================
 
 function openEditModal(id) {
     console.log('✏️ Opening edit modal for ID:', id);
     
-    // Get the row data
-    const row = document.querySelector(`tr[data-id="${id}"]`);
-    if (!row) {
-        console.error('❌ Row not found for ID:', id);
-        showMessage('Error loading booking data', 'error');
-        return;
-    }
-
-    const cells = row.querySelectorAll('td');
-    console.log('📋 Row cells:', cells);
+    // Show loading state in modal
+    document.getElementById('editName').value = 'Loading...';
+    document.getElementById('editProject').value = 'Loading...';
+    document.getElementById('editEmail').value = 'Loading...';
+    document.getElementById('editDate').value = '';
+    document.getElementById('editTimeSlot').value = '';
+    document.getElementById('editCategory').value = '';
+    document.getElementById('editPriority').value = '';
+    document.getElementById('editStatus').value = '';
+    document.getElementById('editNote').value = 'Loading...';
     
-    // Fill modal fields
-    document.getElementById('editId').value = id;
-    document.getElementById('editName').value = cells[0].textContent.trim();
-    document.getElementById('editProject').value = cells[1].textContent.trim();
-    document.getElementById('editEmail').value = cells[1].textContent.trim(); // We need to fix this - email is not in table
-    
-    // For email - we need to fetch it separately
-    fetchBookingData(id);
-    
-    document.getElementById('editDate').value = cells[2].textContent.trim();
-    document.getElementById('editTimeSlot').value = cells[3].textContent.trim();
-    document.getElementById('editCategory').value = cells[4].textContent.trim();
-    document.getElementById('editPriority').value = cells[6].textContent.trim();
-    document.getElementById('editStatus').value = cells[7].textContent.trim();
-    document.getElementById('editNote').value = cells[8] ? cells[8].textContent.trim() : '';
-
     // Show modal
     const modal = document.getElementById('editModal');
     modal.classList.remove('hidden');
-    console.log('✅ Edit modal opened');
+    
+    // Fetch full booking data from server
+    fetchFullBookingData(id);
 }
 
 // ============================================
-// FETCH BOOKING DATA FOR EDIT MODAL
+// FETCH FULL BOOKING DATA FOR EDIT MODAL
 // ============================================
 
-async function fetchBookingData(id) {
+async function fetchFullBookingData(id) {
     try {
+        console.log('📤 Fetching booking data for ID:', id);
         const response = await fetch(`api/get_bookings.php?id=${id}`);
         const bookings = await response.json();
         
-        if (bookings && bookings.length > 0) {
-            const booking = bookings.find(b => b.id == id);
-            if (booking) {
-                document.getElementById('editEmail').value = booking.email || '';
-                console.log('✅ Email loaded for edit modal');
+        console.log('📥 Booking data received:', bookings);
+        
+        // Find the booking with matching ID
+        const booking = bookings.find(b => b.id == id);
+        
+        if (booking) {
+            console.log('✅ Booking found:', booking);
+            
+            // Populate all fields with proper data
+            document.getElementById('editId').value = booking.id;
+            document.getElementById('editName').value = booking.name || '';
+            document.getElementById('editProject').value = booking.project_name || '';
+            document.getElementById('editEmail').value = booking.email || '';
+            
+            // Fix date format for input type="date" (YYYY-MM-DD)
+            if (booking.date) {
+                // If date is already in YYYY-MM-DD format
+                if (booking.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    document.getElementById('editDate').value = booking.date;
+                } else {
+                    // Try to parse and format
+                    try {
+                        const dateObj = new Date(booking.date);
+                        if (!isNaN(dateObj)) {
+                            const year = dateObj.getFullYear();
+                            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                            const day = String(dateObj.getDate()).padStart(2, '0');
+                            document.getElementById('editDate').value = `${year}-${month}-${day}`;
+                        }
+                    } catch (e) {
+                        console.error('Date parsing error:', e);
+                    }
+                }
             }
+            
+            document.getElementById('editTimeSlot').value = booking.time_slot || '';
+            document.getElementById('editCategory').value = booking.category || '';
+            document.getElementById('editPriority').value = booking.priority || 'Medium';
+            document.getElementById('editStatus').value = booking.status || 'Pending';
+            document.getElementById('editNote').value = booking.note || '';
+            
+            console.log('✅ Edit modal populated with data');
+        } else {
+            console.error('❌ Booking not found for ID:', id);
+            showMessage('Error loading booking data', 'error');
+            closeEditModal();
         }
     } catch (error) {
-        console.error('Error fetching booking data:', error);
+        console.error('❌ Error fetching booking data:', error);
+        showMessage('Error loading booking data', 'error');
+        closeEditModal();
     }
 }
 
@@ -554,7 +581,11 @@ async function handleEditSubmit(e) {
     
     const formData = new FormData(form);
     const data = {};
-    formData.forEach((value, key) => data[key] = value);
+    
+    // Convert FormData to object
+    formData.forEach((value, key) => {
+        data[key] = value;
+    });
     
     console.log('📦 Edit data:', data);
     
@@ -574,10 +605,17 @@ async function handleEditSubmit(e) {
         if (result.success) {
             showMessage(result.message || '✅ Booking updated successfully!', 'success');
             closeEditModal();
-            // Reload page to refresh data
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
+            
+            // If we have the updated booking data, update the table row
+            if (result.booking) {
+                updateTableRow(result.booking);
+                updateStats();
+            } else {
+                // Reload page to refresh data
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            }
         } else {
             showMessage(result.error || '❌ Failed to update booking.', 'error');
         }
@@ -588,6 +626,55 @@ async function handleEditSubmit(e) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
     }
+}
+
+// ============================================
+// UPDATE TABLE ROW AFTER EDIT
+// ============================================
+
+function updateTableRow(booking) {
+    const row = document.querySelector(`tr[data-id="${booking.id}"]`);
+    if (!row) {
+        console.log('Row not found, reloading page...');
+        window.location.reload();
+        return;
+    }
+    
+    const categoryClass = `badge-${booking.category.toLowerCase()}`;
+    const priorityClass = `badge-${booking.priority.toLowerCase()}`;
+    const statusClass = `badge-${booking.status.toLowerCase()}`;
+    
+    // Process platform icons
+    const platforms = booking.platforms ? booking.platforms.split(',') : [];
+    let platformHtml = '';
+    const platformIcons = {
+        'whatsapp': 'fab fa-whatsapp text-green-400',
+        'youtube': 'fab fa-youtube text-red-500',
+        'facebook': 'fab fa-facebook text-blue-500',
+        'instagram': 'fab fa-instagram text-pink-500',
+        'linkedin': 'fab fa-linkedin text-blue-400'
+    };
+    platforms.forEach(p => {
+        const trimmed = p.trim();
+        if (platformIcons[trimmed]) {
+            platformHtml += `<i class="${platformIcons[trimmed]} mr-1" title="${trimmed.charAt(0).toUpperCase() + trimmed.slice(1)}"></i>`;
+        }
+    });
+    
+    // Update each cell
+    const cells = row.querySelectorAll('td');
+    if (cells.length >= 8) {
+        cells[0].textContent = booking.name;
+        cells[1].textContent = booking.project_name;
+        cells[2].textContent = formatDate(booking.date);
+        cells[3].textContent = booking.time_slot;
+        cells[4].innerHTML = `<span class="${categoryClass} px-3 py-1 rounded-full text-xs font-medium">${escapeHtml(booking.category)}</span>`;
+        cells[5].innerHTML = platformHtml || '-';
+        cells[6].innerHTML = `<span class="${priorityClass} px-3 py-1 rounded-full text-xs font-medium">${escapeHtml(booking.priority)}</span>`;
+        cells[7].innerHTML = `<span class="${statusClass} px-3 py-1 rounded-full text-xs font-medium">${escapeHtml(booking.status)}</span>`;
+    }
+    
+    console.log('✅ Table row updated for ID:', booking.id);
 }
 
 // ============================================

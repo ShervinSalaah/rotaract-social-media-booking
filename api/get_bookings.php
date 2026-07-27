@@ -16,18 +16,32 @@ header('Content-Type: application/json');
 
 $filters = [];
 
+// Support ID filter (for edit modal)
+if (isset($_GET['id']) && !empty($_GET['id'])) {
+    $filters['id'] = intval($_GET['id']);
+}
+
+// Date filter
 if (isset($_GET['date']) && !empty($_GET['date'])) {
     $filters['date'] = sanitize($_GET['date']);
 }
+
+// Category filter
 if (isset($_GET['category']) && !empty($_GET['category'])) {
     $filters['category'] = sanitize($_GET['category']);
 }
+
+// Priority filter
 if (isset($_GET['priority']) && !empty($_GET['priority'])) {
     $filters['priority'] = sanitize($_GET['priority']);
 }
+
+// Status filter
 if (isset($_GET['status']) && !empty($_GET['status'])) {
     $filters['status'] = sanitize($_GET['status']);
 }
+
+// Search filter
 if (isset($_GET['search']) && !empty($_GET['search'])) {
     $filters['search'] = sanitize($_GET['search']);
 }
@@ -44,6 +58,11 @@ try {
     $params = [];
     
     // Apply filters
+    if (isset($filters['id'])) {
+        $sql .= " AND id = :id";
+        $params[':id'] = $filters['id'];
+    }
+    
     if (isset($filters['date'])) {
         $sql .= " AND date = :date";
         $params[':date'] = $filters['date'];
