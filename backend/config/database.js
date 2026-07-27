@@ -1,29 +1,37 @@
-const { Pool } = require('pg');
+const { createClient } = require('@supabase/supabase-js');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
-// Create connection pool
-const pool = new Pool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT || 5432,
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-    max: 20, // Maximum number of clients in the pool
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
-});
+// Initialize Supabase client
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY
+);
 
-// Test connection
-pool.connect((err, client, release) => {
-    if (err) {
-        console.error('❌ Error connecting to database:', err.stack);
-    } else {
-        console.log('✅ Connected to PostgreSQL database');
-        release();
+// Test connection function
+async function testConnection() {
+    try {
+        const { data, error } = await supabase
+            .from('bookings')
+            .select('*')
+            .limit(1);
+        
+        if (error) {
+            console.error('❌ Supabase connection error:', error.message);
+            return false;
+        }
+        
+        console.log('✅ Connected to Supabase successfully!');
+        return true;
+    } catch (err) {
+        console.error('❌ Connection failed:', err.message);
+        return false;
     }
-});
+}
 
-module.exports = pool;
+// Export both supabase client and test function
+module.exports = {
+    supabase,
+    testConnection
+};
