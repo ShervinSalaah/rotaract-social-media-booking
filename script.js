@@ -95,12 +95,17 @@ function attachEventListeners() {
 }
 
 // ============================================
-// CALENDAR NAVIGATION
+// CALENDAR NAVIGATION - GLOBAL FUNCTIONS
 // ============================================
 
 function changeMonth(delta) {
+    console.log('📅 changeMonth called with delta:', delta);
+    
     const monthDisplay = document.getElementById('calendarMonth');
-    if (!monthDisplay) return;
+    if (!monthDisplay) {
+        console.error('❌ calendarMonth element not found');
+        return;
+    }
     
     // Get current month/year from display
     const parts = monthDisplay.textContent.trim().split(' ');
@@ -109,6 +114,11 @@ function changeMonth(delta) {
     
     let currentMonth = monthNames.indexOf(parts[0]);
     let currentYear = parseInt(parts[1]);
+    
+    if (isNaN(currentMonth) || isNaN(currentYear)) {
+        console.error('❌ Invalid month/year from display:', monthDisplay.textContent);
+        return;
+    }
     
     // Calculate new month/year
     currentMonth += delta;
@@ -120,8 +130,77 @@ function changeMonth(delta) {
         currentYear--;
     }
     
+    console.log('📅 Navigating to:', currentMonth + 1, currentYear);
+    
     // Reload page with new month/year parameters
     window.location.href = `index.php?month=${currentMonth + 1}&year=${currentYear}`;
+}
+
+// ============================================
+// ARCHIVE TOGGLE - GLOBAL FUNCTION
+// ============================================
+
+let showArchived = false;
+
+function toggleArchive() {
+    console.log('📦 toggleArchive called, current state:', showArchived);
+    
+    showArchived = !showArchived;
+    const btn = document.getElementById('archiveToggleBtn');
+    
+    if (!btn) {
+        console.error('❌ archiveToggleBtn not found');
+        return;
+    }
+    
+    if (showArchived) {
+        btn.innerHTML = '<i class="fas fa-archive mr-1"></i> Hide Archive';
+        btn.className = 'bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded-xl text-sm font-bold text-white transition';
+        loadBookings(true);
+    } else {
+        btn.innerHTML = '<i class="fas fa-archive mr-1"></i> Show Archive';
+        btn.className = 'bg-slate-700 hover:bg-slate-600 px-6 py-2 rounded-xl text-sm font-bold text-white transition';
+        loadBookings(false);
+    }
+}
+
+async function loadBookings(archived) {
+    console.log('📊 loadBookings called with archived:', archived);
+    
+    try {
+        const response = await fetch(`api/get_bookings.php?archived=${archived ? 'true' : 'false'}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch bookings');
+        }
+        const bookings = await response.json();
+        console.log('📊 Bookings loaded:', bookings.length);
+        renderBookingsTable(bookings);
+        
+        // Update the heading
+        const heading = document.querySelector('.glass-card:last-of-type h2');
+        if (heading) {
+            if (archived) {
+                heading.textContent = '📦 Archived Bookings';
+            } else {
+                heading.textContent = '📋 Active Bookings';
+            }
+        }
+        
+        // Update the count
+        const totalSpan = document.getElementById('archiveCount');
+        if (totalSpan) {
+            if (archived) {
+                totalSpan.textContent = `(${bookings.length} archived)`;
+            } else {
+                const activeResponse = await fetch('api/get_bookings.php?archived=false');
+                const activeBookings = await activeResponse.json();
+                totalSpan.textContent = `(${activeBookings.length} active)`;
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error loading bookings:', error);
+        showMessage('Failed to load archived bookings', 'error');
+    }
 }
 
 // ============================================
@@ -129,6 +208,8 @@ function changeMonth(delta) {
 // ============================================
 
 function showBookingDetails(dateStr) {
+    console.log('📅 showBookingDetails called for:', dateStr);
+    
     // Remove existing modal
     const existingModal = document.getElementById('dateBookingsModal');
     if (existingModal) existingModal.remove();
@@ -531,7 +612,7 @@ function renderBookingsTable(bookings) {
             <tr>
                 <td colspan="9" class="py-8 text-center text-slate-400">
                     <i class="fas fa-inbox text-4xl block mb-2"></i>
-                    No bookings found matching your filters.
+                    No bookings found.
                 </td>
             </tr>
         `;
@@ -604,6 +685,8 @@ function renderBookingsTable(bookings) {
 // ============================================
 
 function openEditModal(id) {
+    console.log('✏️ Opening edit modal for ID:', id);
+    
     document.getElementById('editName').value = 'Loading...';
     document.getElementById('editProject').value = 'Loading...';
     document.getElementById('editEmail').value = 'Loading...';
@@ -811,38 +894,6 @@ async function deleteBooking(id) {
 }
 
 // ============================================
-// ARCHIVE FUNCTIONS
-// ============================================
-
-let showArchived = false;
-
-function toggleArchive() {
-    showArchived = !showArchived;
-    const btn = document.getElementById('archiveToggleBtn');
-    
-    if (showArchived) {
-        btn.innerHTML = '<i class="fas fa-archive mr-1"></i> Hide Archive';
-        btn.className = 'bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded-xl text-sm font-bold text-white transition';
-        loadBookings(true);
-    } else {
-        btn.innerHTML = '<i class="fas fa-archive mr-1"></i> Show Archive';
-        btn.className = 'bg-slate-700 hover:bg-slate-600 px-6 py-2 rounded-xl text-sm font-bold text-white transition';
-        loadBookings(false);
-    }
-}
-
-async function loadBookings(archived) {
-    try {
-        const response = await fetch(`api/get_bookings.php?archived=${archived}`);
-        const bookings = await response.json();
-        renderBookingsTable(bookings);
-    } catch (error) {
-        console.error('Error loading bookings:', error);
-        showMessage('Failed to load archived bookings', 'error');
-    }
-}
-
-// ============================================
 // SHOW FLASH MESSAGE
 // ============================================
 
@@ -899,16 +950,20 @@ function formatDate(dateString) {
 // EXPOSE FUNCTIONS TO GLOBAL SCOPE
 // ============================================
 
+// Make sure all functions are accessible globally
+window.changeMonth = changeMonth;
+window.toggleArchive = toggleArchive;
+window.loadBookings = loadBookings;
 window.openEditModal = openEditModal;
 window.closeEditModal = closeEditModal;
 window.deleteBooking = deleteBooking;
 window.applyFilters = applyFilters;
 window.resetFilters = resetFilters;
 window.checkAvailability = checkAvailability;
-window.toggleArchive = toggleArchive;
 window.showBookingDetails = showBookingDetails;
 window.closeDateModal = closeDateModal;
-window.changeMonth = changeMonth;
 window.showMessage = showMessage;
 
-console.log('✅ All functions loaded successfully!');
+console.log('✅ All functions exposed to global scope!');
+console.log('✅ changeMonth available:', typeof window.changeMonth);
+console.log('✅ toggleArchive available:', typeof window.toggleArchive);
