@@ -15,6 +15,7 @@ header('Content-Type: application/json');
 // ============================================
 
 $filters = [];
+$showArchived = isset($_GET['archived']) && $_GET['archived'] == 'true';
 
 // Support ID filter (for edit modal)
 if (isset($_GET['id']) && !empty($_GET['id'])) {
@@ -54,8 +55,8 @@ try {
     $pdo = getDBConnection();
     
     // Start building query
-    $sql = "SELECT * FROM bookings WHERE 1=1";
-    $params = [];
+    $sql = "SELECT * FROM bookings WHERE archived = :archived";
+    $params = [':archived' => $showArchived ? 1 : 0];
     
     // Apply filters
     if (isset($filters['id'])) {

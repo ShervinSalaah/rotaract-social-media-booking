@@ -139,8 +139,8 @@ try {
     // INSERT BOOKING
     // ============================================
     
-    $sql = "INSERT INTO bookings (name, project_name, email, date, time_slot, category, platforms, note, priority, status) 
-            VALUES (:name, :project_name, :email, :date, :time_slot, :category, :platforms, :note, :priority, :status)";
+    $sql = "INSERT INTO bookings (name, project_name, email, date, time_slot, category, platforms, note, priority, status, archived) 
+        VALUES (:name, :project_name, :email, :date, :time_slot, :category, :platforms, :note, :priority, :status, 0)";
     
     $stmt = $pdo->prepare($sql);
     $result = $stmt->execute([
@@ -201,3 +201,4 @@ try {
     }
 }
 ?>
+

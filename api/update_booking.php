@@ -63,7 +63,7 @@ $priority = isset($data['priority']) ? sanitize($data['priority']) : 'Medium';
 $status = isset($data['status']) ? sanitize($data['status']) : 'Pending';
 
 // ============================================
-// VALIDATE EMAIL
+// VALIDATE
 // ============================================
 
 if (!validateEmail($email)) {
@@ -75,15 +75,11 @@ if (!validateEmail($email)) {
     exit;
 }
 
-// ============================================
-// VALIDATE DATE
-// ============================================
-
 if (!validateDate($date)) {
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'error' => 'Invalid date format. Use YYYY-MM-DD'
+        'error' => 'Invalid date format'
     ]);
     exit;
 }
@@ -96,7 +92,7 @@ try {
     $pdo = getDBConnection();
     
     // Check if booking exists
-    $check_sql = "SELECT id, date, time_slot FROM bookings WHERE id = :id";
+    $check_sql = "SELECT id, date, time_slot, status FROM bookings WHERE id = :id";
     $check_stmt = $pdo->prepare($check_sql);
     $check_stmt->execute([':id' => $id]);
     $existing = $check_stmt->fetch(PDO::FETCH_ASSOC);
@@ -110,9 +106,9 @@ try {
         exit;
     }
     
-    // Check for duplicate slot (excluding current booking)
+    // Check for duplicate slot (excluding current booking and archived)
     if ($date !== $existing['date'] || $time_slot !== $existing['time_slot']) {
-        $duplicate_sql = "SELECT id FROM bookings WHERE date = :date AND time_slot = :time_slot AND id != :id";
+        $duplicate_sql = "SELECT id FROM bookings WHERE date = :date AND time_slot = :time_slot AND id != :id AND archived = 0";
         $duplicate_stmt = $pdo->prepare($duplicate_sql);
         $duplicate_stmt->execute([
             ':date' => $date,
@@ -158,6 +154,19 @@ try {
     ]);
     
     if ($result) {
+        // Handle archiving based on status
+        if ($status === 'Completed') {
+            // Archive completed bookings
+            $archive_sql = "UPDATE bookings SET archived = 1 WHERE id = :id";
+            $archive_stmt = $pdo->prepare($archive_sql);
+            $archive_stmt->execute([':id' => $id]);
+        } else if ($existing['status'] === 'Completed' && $status !== 'Completed') {
+            // Unarchive if status changed from Completed to something else
+            $unarchive_sql = "UPDATE bookings SET archived = 0 WHERE id = :id";
+            $unarchive_stmt = $pdo->prepare($unarchive_sql);
+            $unarchive_stmt->execute([':id' => $id]);
+        }
+        
         // Fetch updated booking data
         $get_sql = "SELECT * FROM bookings WHERE id = :id";
         $get_stmt = $pdo->prepare($get_sql);

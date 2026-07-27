@@ -17,20 +17,24 @@ $pageTitle = 'Rotaract Social Media Booking';
 // FETCH BOOKINGS FROM DATABASE
 // ============================================
 
-// Get all bookings (order by date and time)
-$bookings = fetchAll("SELECT * FROM bookings ORDER BY date ASC, time_slot ASC");
+// Get active bookings (not archived)
+$bookings = fetchAll("SELECT * FROM bookings WHERE archived = 0 ORDER BY date ASC, time_slot ASC");
+
+// Get archive count
+$archiveCount = fetchOne("SELECT COUNT(*) as total FROM bookings WHERE archived = 1");
+$archiveCount = $archiveCount ? $archiveCount['total'] : 0;
 
 // Get statistics for dashboard
-$totalBookings = fetchOne("SELECT COUNT(*) as total FROM bookings");
+$totalBookings = fetchOne("SELECT COUNT(*) as total FROM bookings WHERE archived = 0");
 $totalBookings = $totalBookings ? $totalBookings['total'] : 0;
 
-$todayBookings = fetchOne("SELECT COUNT(*) as today FROM bookings WHERE date = CURDATE()");
+$todayBookings = fetchOne("SELECT COUNT(*) as today FROM bookings WHERE date = CURDATE() AND archived = 0");
 $todayBookings = $todayBookings ? $todayBookings['today'] : 0;
 
-$pendingBookings = fetchOne("SELECT COUNT(*) as pending FROM bookings WHERE status = 'Pending'");
+$pendingBookings = fetchOne("SELECT COUNT(*) as pending FROM bookings WHERE status = 'Pending' AND archived = 0");
 $pendingBookings = $pendingBookings ? $pendingBookings['pending'] : 0;
 
-$categories = fetchAll("SELECT category, COUNT(*) as count FROM bookings GROUP BY category");
+$categories = fetchAll("SELECT category, COUNT(*) as count FROM bookings WHERE archived = 0 GROUP BY category");
 
 // Get unique categories for filter dropdown
 $uniqueCategories = [];
@@ -111,6 +115,41 @@ include 'includes/header.php';
         </button>
     </div>
 <?php endif; ?>
+
+<!-- ============================================ -->
+<!-- CALENDAR VIEW                                -->
+<!-- ============================================ -->
+<section class="glass-card rounded-3xl p-6 md:p-8 mb-8">
+    <div class="flex flex-wrap justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold flex items-center gap-3">
+            <span class="w-2 h-8 bg-indigo-500 rounded-full"></span>
+            <i class="fas fa-calendar-alt text-indigo-400"></i>
+            Calendar View
+        </h2>
+        <div class="flex items-center gap-3">
+            <button onclick="changeMonth(-1)" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-xl text-sm font-bold text-white transition">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <span id="calendarMonth" class="text-lg font-bold text-white min-w-[150px] text-center"></span>
+            <button onclick="changeMonth(1)" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-xl text-sm font-bold text-white transition">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div id="calendarGrid" class="grid grid-cols-7 gap-2">
+        <div class="text-center text-slate-400 font-bold py-2">Sun</div>
+        <div class="text-center text-slate-400 font-bold py-2">Mon</div>
+        <div class="text-center text-slate-400 font-bold py-2">Tue</div>
+        <div class="text-center text-slate-400 font-bold py-2">Wed</div>
+        <div class="text-center text-slate-400 font-bold py-2">Thu</div>
+        <div class="text-center text-slate-400 font-bold py-2">Fri</div>
+        <div class="text-center text-slate-400 font-bold py-2">Sat</div>
+    </div>
+    <div id="calendarDays" class="grid grid-cols-7 gap-2 mt-2">
+        <!-- Days will be rendered by JavaScript -->
+    </div>
+</section>
 
 <!-- ============================================ -->
 <!-- BOOKING FORM                                 -->
@@ -279,11 +318,19 @@ include 'includes/header.php';
             Bookings Dashboard
         </h2>
         <span class="text-sm text-slate-400">
-            <i class="fas fa-database mr-1"></i> <?php echo $totalBookings; ?> bookings total
+            <i class="fas fa-database mr-1"></i> <?php echo $totalBookings; ?> active bookings
+            <span id="archiveCount" class="ml-2 text-slate-500">(<?php echo $archiveCount; ?> archived)</span>
         </span>
     </div>
 
-    <!-- Filters -->
+    <!-- Filters & Archive Toggle -->
+    <div class="flex flex-wrap items-center gap-3 mb-6">
+        <button onclick="toggleArchive()" id="archiveToggleBtn" 
+                class="bg-slate-700 hover:bg-slate-600 px-6 py-2 rounded-xl text-sm font-bold text-white transition">
+            <i class="fas fa-archive mr-1"></i> Show Archive
+        </button>
+    </div>
+
     <div class="flex flex-wrap gap-3 mb-6">
         <input type="date" id="filterDate" 
                class="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
@@ -399,7 +446,7 @@ include 'includes/header.php';
                     <tr>
                         <td colspan="9" class="py-8 text-center text-slate-400">
                             <i class="fas fa-inbox text-4xl block mb-2"></i>
-                            No bookings found. Create your first booking above!
+                            No active bookings found. Create your first booking above!
                         </td>
                     </tr>
                 <?php endif; ?>

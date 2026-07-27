@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ DOM fully loaded');
     attachEventListeners();
     setupEditModal();
+    renderCalendar();
+    updateStats();
 });
 
 // ============================================
@@ -73,8 +75,8 @@ async function updateTimeSlotOptions() {
     }
 
     try {
-        // Fetch all bookings for this date
-        const response = await fetch(`api/get_bookings.php?date=${date}`);
+        // Fetch all bookings for this date (active only)
+        const response = await fetch(`api/get_bookings.php?date=${date}&archived=false`);
         const bookings = await response.json();
         
         // Get booked time slots
@@ -190,6 +192,8 @@ async function handleFormSubmit(e) {
                 addBookingToTable(result.booking);
                 // Update stats
                 updateStats();
+                // Refresh calendar
+                renderCalendar();
             } else {
                 // Reload page to get updated data
                 setTimeout(() => {
@@ -299,7 +303,7 @@ function addBookingToTable(booking) {
 
 async function updateStats() {
     try {
-        const response = await fetch('api/get_bookings.php');
+        const response = await fetch('api/get_bookings.php?archived=false');
         const bookings = await response.json();
         
         const total = bookings.length;
@@ -314,6 +318,14 @@ async function updateStats() {
             statTexts[1].textContent = today;
             statTexts[2].textContent = pending;
             statTexts[3].textContent = categories.length;
+        }
+        
+        // Update archive count
+        const archivedResponse = await fetch('api/get_bookings.php?archived=true');
+        const archivedBookings = await archivedResponse.json();
+        const archiveCountEl = document.getElementById('archiveCount');
+        if (archiveCountEl) {
+            archiveCountEl.textContent = `(${archivedBookings.length} archived)`;
         }
         
         console.log('📊 Stats updated');
@@ -340,6 +352,7 @@ function applyFilters() {
     if (priority) params.append('priority', priority);
     if (status) params.append('status', status);
     if (search) params.append('search', search);
+    params.append('archived', 'false'); // Only show active bookings
 
     console.log('🔍 Applying filters:', params.toString());
 
@@ -610,6 +623,7 @@ async function handleEditSubmit(e) {
             if (result.booking) {
                 updateTableRow(result.booking);
                 updateStats();
+                renderCalendar();
             } else {
                 // Reload page to refresh data
                 setTimeout(() => {
@@ -709,6 +723,7 @@ async function deleteBooking(id) {
                 row.remove();
                 // Update stats
                 updateStats();
+                renderCalendar();
             } else {
                 // Reload page if row not found
                 setTimeout(() => {
@@ -721,6 +736,209 @@ async function deleteBooking(id) {
     } catch (error) {
         console.error('❌ Delete error:', error);
         showMessage('❌ Network error. Please try again.', 'error');
+    }
+}
+
+// ============================================
+// CALENDAR FUNCTIONS
+// ============================================
+
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+
+/**
+ * Render the calendar
+ */
+async function renderCalendar() {
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    document.getElementById('calendarMonth').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+    
+    // Fetch bookings for the current month (active only)
+    const startDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`;
+    const endDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${new Date(currentYear, currentMonth + 1, 0).getDate()}`;
+    
+    try {
+        const response = await fetch(`api/get_bookings.php?archived=false`);
+        const bookings = await response.json();
+        
+        // Filter bookings for current month
+        const monthBookings = bookings.filter(b => {
+            const bookingDate = new Date(b.date);
+            return bookingDate.getMonth() === currentMonth && bookingDate.getFullYear() === currentYear;
+        });
+        
+        // Create a map of dates with bookings
+        const bookingMap = {};
+        monthBookings.forEach(b => {
+            if (!bookingMap[b.date]) bookingMap[b.date] = [];
+            bookingMap[b.date].push(b);
+        });
+        
+        // Build calendar days
+        const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+        
+        const calendarDays = document.getElementById('calendarDays');
+        calendarDays.innerHTML = '';
+        
+        // Previous month days
+        for (let i = firstDay - 1; i >= 0; i--) {
+            const day = daysInPrevMonth - i;
+            const div = document.createElement('div');
+            div.className = 'text-center py-2 rounded-xl text-slate-500 text-sm';
+            div.textContent = day;
+            calendarDays.appendChild(div);
+        }
+        
+        // Current month days
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            const div = document.createElement('div');
+            
+            if (bookingMap[dateStr]) {
+                const count = bookingMap[dateStr].length;
+                div.className = 'text-center py-2 rounded-xl bg-indigo-600/30 text-white font-bold cursor-pointer hover:bg-indigo-600/50 transition relative';
+                div.textContent = i;
+                
+                // Add count badge
+                const badge = document.createElement('span');
+                badge.className = 'absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center';
+                badge.textContent = count;
+                div.appendChild(badge);
+                
+                // Click to show bookings for this date
+                div.onclick = () => showBookingsForDate(dateStr, bookingMap[dateStr]);
+            } else {
+                div.className = 'text-center py-2 rounded-xl text-slate-400';
+                div.textContent = i;
+            }
+            
+            calendarDays.appendChild(div);
+        }
+        
+        // Next month days
+        const totalDays = firstDay + daysInMonth;
+        const remainingDays = totalDays % 7 === 0 ? 0 : 7 - (totalDays % 7);
+        for (let i = 1; i <= remainingDays; i++) {
+            const div = document.createElement('div');
+            div.className = 'text-center py-2 rounded-xl text-slate-500 text-sm';
+            div.textContent = i;
+            calendarDays.appendChild(div);
+        }
+        
+    } catch (error) {
+        console.error('Error rendering calendar:', error);
+    }
+}
+
+/**
+ * Change month
+ */
+function changeMonth(delta) {
+    currentMonth += delta;
+    if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+    } else if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+    }
+    renderCalendar();
+}
+
+/**
+ * Show bookings for a specific date
+ */
+function showBookingsForDate(dateStr, bookings) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4';
+    modal.id = 'dateBookingsModal';
+    
+    let bookingsHtml = '';
+    bookings.forEach(b => {
+        bookingsHtml += `
+            <div class="flex justify-between items-center border-b border-slate-700/50 py-2">
+                <div>
+                    <span class="font-medium text-white">${escapeHtml(b.name)}</span>
+                    <span class="text-slate-400 text-sm ml-2">${escapeHtml(b.time_slot)}</span>
+                </div>
+                <span class="badge-${b.category.toLowerCase()} px-2 py-1 rounded-full text-xs">
+                    ${escapeHtml(b.category)}
+                </span>
+            </div>
+        `;
+    });
+    
+    modal.innerHTML = `
+        <div class="bg-slate-800 rounded-3xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto border border-slate-700">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-white">
+                    <i class="fas fa-calendar-day text-indigo-400 mr-2"></i>
+                    Bookings for ${formatDate(dateStr)}
+                </h2>
+                <button onclick="this.closest('.fixed').remove()" class="text-slate-400 hover:text-white text-2xl transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-2">
+                ${bookingsHtml}
+                <div class="mt-4 pt-4 border-t border-slate-700 text-sm text-slate-400">
+                    Total: ${bookings.length} booking${bookings.length > 1 ? 's' : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+// ============================================
+// ARCHIVE FUNCTIONS
+// ============================================
+
+let showArchived = false;
+
+/**
+ * Toggle archive view
+ */
+function toggleArchive() {
+    showArchived = !showArchived;
+    const btn = document.getElementById('archiveToggleBtn');
+    
+    if (showArchived) {
+        btn.innerHTML = '<i class="fas fa-archive mr-1"></i> Hide Archive';
+        btn.className = 'bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded-xl text-sm font-bold text-white transition';
+        loadBookings(true);
+    } else {
+        btn.innerHTML = '<i class="fas fa-archive mr-1"></i> Show Archive';
+        btn.className = 'bg-slate-700 hover:bg-slate-600 px-6 py-2 rounded-xl text-sm font-bold text-white transition';
+        loadBookings(false);
+    }
+}
+
+/**
+ * Load bookings with archive filter
+ */
+async function loadBookings(archived) {
+    try {
+        const response = await fetch(`api/get_bookings.php?archived=${archived}`);
+        const bookings = await response.json();
+        renderBookingsTable(bookings);
+        
+        // Update archive count
+        const activeResponse = await fetch('api/get_bookings.php?archived=false');
+        const activeBookings = await activeResponse.json();
+        const archiveCountEl = document.getElementById('archiveCount');
+        if (archiveCountEl) {
+            const archivedCount = archived ? bookings.length : 
+                (await (await fetch('api/get_bookings.php?archived=true')).json()).length;
+            archiveCountEl.textContent = `(${archivedCount} archived)`;
+        }
+    } catch (error) {
+        console.error('Error loading bookings:', error);
     }
 }
 
@@ -795,5 +1013,7 @@ window.deleteBooking = deleteBooking;
 window.applyFilters = applyFilters;
 window.resetFilters = resetFilters;
 window.checkAvailability = checkAvailability;
+window.toggleArchive = toggleArchive;
+window.changeMonth = changeMonth;
 
 console.log('✅ All functions loaded successfully!');
