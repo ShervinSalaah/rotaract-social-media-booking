@@ -130,7 +130,9 @@ include 'includes/header.php';
             <button onclick="changeMonth(-1)" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-xl text-sm font-bold text-white transition">
                 <i class="fas fa-chevron-left"></i>
             </button>
-            <span id="calendarMonth" class="text-lg font-bold text-white min-w-[150px] text-center"></span>
+            <span id="calendarMonth" class="text-lg font-bold text-white min-w-[150px] text-center">
+                <?php echo date('F Y'); ?>
+            </span>
             <button onclick="changeMonth(1)" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-xl text-sm font-bold text-white transition">
                 <i class="fas fa-chevron-right"></i>
             </button>
@@ -146,8 +148,106 @@ include 'includes/header.php';
         <div class="text-center text-slate-400 font-bold py-2 text-sm">Fri</div>
         <div class="text-center text-slate-400 font-bold py-2 text-sm">Sat</div>
     </div>
+    
+    <!-- PHP Fallback Calendar -->
     <div id="calendarDays" class="grid grid-cols-7 gap-2 mt-2">
-        <!-- Days will be rendered by JavaScript -->
+        <?php
+        // Get current month and year
+        $month = date('n');
+        $year = date('Y');
+        $firstDay = date('w', mktime(0, 0, 0, $month, 1, $year));
+        $daysInMonth = date('t', mktime(0, 0, 0, $month, 1, $year));
+        $daysInPrevMonth = date('t', mktime(0, 0, 0, $month - 1, 1, $year));
+        $today = date('Y-m-d');
+        
+        // Fetch bookings for calendar
+        $calendarBookings = [];
+        try {
+            $pdo = getDBConnection();
+            $stmt = $pdo->prepare("SELECT date FROM bookings WHERE archived = 0");
+            $stmt->execute();
+            $calendarBookings = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Exception $e) {
+            // Silently fail
+        }
+        
+        // Create booking count map
+        $bookingCount = [];
+        foreach ($calendarBookings as $date) {
+            if (!isset($bookingCount[$date])) {
+                $bookingCount[$date] = 0;
+            }
+            $bookingCount[$date]++;
+        }
+        
+        // Previous month days
+        for ($i = $firstDay - 1; $i >= 0; $i--) {
+            $day = $daysInPrevMonth - $i;
+            echo '<div class="text-center py-3 rounded-xl text-slate-500 text-sm opacity-50">' . $day . '</div>';
+        }
+        
+        // Current month days
+        for ($i = 1; $i <= $daysInMonth; $i++) {
+            $dateStr = $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT) . '-' . str_pad($i, 2, '0', STR_PAD_LEFT);
+            $count = isset($bookingCount[$dateStr]) ? $bookingCount[$dateStr] : 0;
+            
+            if ($count > 0) {
+                // Has bookings
+                $bgColor = 'bg-indigo-500/40';
+                if ($count >= 3) {
+                    $bgColor = 'bg-indigo-600/50';
+                } elseif ($count >= 2) {
+                    $bgColor = 'bg-indigo-500/40';
+                } else {
+                    $bgColor = 'bg-indigo-400/30';
+                }
+                echo '<div class="text-center py-3 rounded-xl text-white font-bold ' . $bgColor . ' hover:bg-indigo-500/60 transition-all duration-200 cursor-pointer relative" 
+                           onclick="showMessage(\'' . $count . ' booking(s) on ' . date('M d, Y', strtotime($dateStr)) . '\', \'info\')">
+                    ' . $i . '
+                    <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center shadow-lg">' . $count . '</span>
+                </div>';
+            } else {
+                // No bookings
+                if ($dateStr === $today) {
+                    echo '<div class="text-center py-3 rounded-xl text-indigo-400 font-bold border border-indigo-500/30 bg-indigo-500/10">' . $i . '</div>';
+                } else {
+                    echo '<div class="text-center py-3 rounded-xl text-slate-300 hover:bg-slate-700/30 transition-all duration-200 cursor-pointer" 
+                               onclick="showMessage(\'No bookings on ' . date('M d, Y', strtotime($dateStr)) . '\', \'info\')">' . $i . '</div>';
+                }
+            }
+        }
+        
+        // Next month days
+        $totalDays = $firstDay + $daysInMonth;
+        $remainingDays = $totalDays % 7 === 0 ? 0 : 7 - ($totalDays % 7);
+        for ($i = 1; $i <= $remainingDays; $i++) {
+            echo '<div class="text-center py-3 rounded-xl text-slate-500 text-sm opacity-50">' . $i . '</div>';
+        }
+        ?>
+    </div>
+    
+    <!-- Legend -->
+    <div class="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-slate-700/50 text-xs text-slate-400">
+        <span class="flex items-center gap-2">
+            <span class="w-4 h-4 rounded bg-indigo-400/30"></span>
+            <span>1 booking</span>
+        </span>
+        <span class="flex items-center gap-2">
+            <span class="w-4 h-4 rounded bg-indigo-500/40"></span>
+            <span>2 bookings</span>
+        </span>
+        <span class="flex items-center gap-2">
+            <span class="w-4 h-4 rounded bg-indigo-600/50"></span>
+            <span>3+ bookings</span>
+        </span>
+        <span class="flex items-center gap-2">
+            <span class="w-4 h-4 rounded border border-indigo-500/30 bg-indigo-500/10"></span>
+            <span>Today</span>
+        </span>
+        <span class="flex items-center gap-2 ml-auto">
+            <i class="fas fa-mouse-pointer text-indigo-400"></i>
+            <span>Click date for details</span>
+        </span>
     </div>
 </section>
 
@@ -198,8 +298,7 @@ include 'includes/header.php';
                 <i class="fas fa-calendar text-indigo-400 mr-1"></i> Date *
             </label>
             <input type="date" name="date" id="bookingDate" required
-                    min="<?php echo date('Y-m-d'); ?>"
-
+                   min="<?php echo date('Y-m-d'); ?>"
                    class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
         </div>
         
@@ -493,8 +592,7 @@ include 'includes/header.php';
             <div>
                 <label class="block text-sm font-medium text-slate-400 mb-1">Date *</label>
                 <input type="date" name="date" id="editDate" required
-                        min="<?php echo date('Y-m-d'); ?>"
-
+                       min="<?php echo date('Y-m-d'); ?>"
                        class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500">
             </div>
             <div>
