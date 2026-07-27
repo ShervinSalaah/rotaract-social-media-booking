@@ -138,13 +138,13 @@ include 'includes/header.php';
     </div>
     
     <div id="calendarGrid" class="grid grid-cols-7 gap-2">
-        <div class="text-center text-slate-400 font-bold py-2">Sun</div>
-        <div class="text-center text-slate-400 font-bold py-2">Mon</div>
-        <div class="text-center text-slate-400 font-bold py-2">Tue</div>
-        <div class="text-center text-slate-400 font-bold py-2">Wed</div>
-        <div class="text-center text-slate-400 font-bold py-2">Thu</div>
-        <div class="text-center text-slate-400 font-bold py-2">Fri</div>
-        <div class="text-center text-slate-400 font-bold py-2">Sat</div>
+        <div class="text-center text-slate-400 font-bold py-2 text-sm">Sun</div>
+        <div class="text-center text-slate-400 font-bold py-2 text-sm">Mon</div>
+        <div class="text-center text-slate-400 font-bold py-2 text-sm">Tue</div>
+        <div class="text-center text-slate-400 font-bold py-2 text-sm">Wed</div>
+        <div class="text-center text-slate-400 font-bold py-2 text-sm">Thu</div>
+        <div class="text-center text-slate-400 font-bold py-2 text-sm">Fri</div>
+        <div class="text-center text-slate-400 font-bold py-2 text-sm">Sat</div>
     </div>
     <div id="calendarDays" class="grid grid-cols-7 gap-2 mt-2">
         <!-- Days will be rendered by JavaScript -->

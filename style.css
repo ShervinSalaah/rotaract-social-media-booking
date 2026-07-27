@@ -1,6 +1,6 @@
 /* ============================================
    ROTARACT SOCIAL MEDIA BOOKING APP
-   Custom Styles
+   Custom Styles - Full Version
    ============================================ */
 
 /* ============================================
@@ -141,6 +141,48 @@ body {
 }
 
 /* ============================================
+   CALENDAR ANIMATIONS
+   ============================================ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* Calendar day hover effects */
+#calendarDays div {
+    transition: all 0.2s ease;
+}
+
+#calendarDays div:hover {
+    transform: scale(1.05);
+}
+
+#calendarDays div.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Calendar legend styling */
+#calendarLegend {
+    font-size: 0.75rem;
+}
+
+#calendarLegend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ============================================
    RESPONSIVE ADJUSTMENTS
    ============================================ */
 @media (max-width: 768px) {
@@ -158,6 +200,11 @@ body {
     
     .container {
         padding: 0 10px;
+    }
+    
+    #calendarDays div {
+        font-size: 0.75rem;
+        padding: 8px 4px;
     }
 }
 
