@@ -1,6 +1,6 @@
 // ============================================
 // ROTARACT SOCIAL MEDIA BOOKING APP
-// Custom JavaScript - Full Version
+// Custom JavaScript - Full Version with Debug
 // ============================================
 
 console.log('✅ script.js loaded successfully!');
@@ -11,9 +11,30 @@ console.log('✅ script.js loaded successfully!');
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ DOM fully loaded');
+    
+    // Check if calendar elements exist
+    const calendarDays = document.getElementById('calendarDays');
+    const calendarMonth = document.getElementById('calendarMonth');
+    
+    if (calendarDays) {
+        console.log('✅ calendarDays element found');
+    } else {
+        console.error('❌ calendarDays element NOT found!');
+    }
+    
+    if (calendarMonth) {
+        console.log('✅ calendarMonth element found');
+    } else {
+        console.error('❌ calendarMonth element NOT found!');
+    }
+    
     attachEventListeners();
     setupEditModal();
+    
+    // Call renderCalendar
+    console.log('📅 Calling renderCalendar()...');
     renderCalendar();
+    
     updateStats();
 });
 
@@ -740,16 +761,19 @@ async function deleteBooking(id) {
 }
 
 // ============================================
-// CALENDAR FUNCTIONS
+// CALENDAR FUNCTIONS - DEBUG VERSION
 // ============================================
 
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 
 /**
- * Render the calendar with proper dates and interactivity
+ * Render the calendar with proper dates - DEBUG VERSION
  */
 async function renderCalendar() {
+    console.log('📅 renderCalendar() called!');
+    console.log('📅 Current month:', currentMonth, 'Year:', currentYear);
+    
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
                         'July', 'August', 'September', 'October', 'November', 'December'];
     
@@ -757,12 +781,43 @@ async function renderCalendar() {
     const monthDisplay = document.getElementById('calendarMonth');
     if (monthDisplay) {
         monthDisplay.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+        console.log('✅ Month display updated:', monthDisplay.textContent);
+    } else {
+        console.error('❌ calendarMonth element NOT found!');
     }
     
-    // Fetch all active bookings
+    const calendarDays = document.getElementById('calendarDays');
+    if (!calendarDays) {
+        console.error('❌ calendarDays element NOT found!');
+        return;
+    }
+    console.log('✅ calendarDays element found');
+    
+    // Clear previous days
+    calendarDays.innerHTML = '';
+    console.log('✅ calendarDays cleared');
+    
+    // Get calendar calculations
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    
+    console.log('📅 Calendar calculations:', {
+        firstDay: firstDay,
+        daysInMonth: daysInMonth,
+        daysInPrevMonth: daysInPrevMonth,
+        todayStr: todayStr
+    });
+    
+    // Fetch bookings
+    let bookingMap = {};
     try {
+        console.log('📊 Fetching bookings for calendar...');
         const response = await fetch('api/get_bookings.php?archived=false');
         const bookings = await response.json();
+        console.log('📊 Bookings fetched:', bookings.length);
         
         // Filter bookings for current month
         const monthBookings = bookings.filter(b => {
@@ -770,164 +825,106 @@ async function renderCalendar() {
             return bookingDate.getMonth() === currentMonth && 
                    bookingDate.getFullYear() === currentYear;
         });
+        console.log('📊 Bookings for this month:', monthBookings.length);
         
         // Create a map of dates with bookings
-        const bookingMap = {};
         monthBookings.forEach(b => {
             if (!bookingMap[b.date]) bookingMap[b.date] = [];
             bookingMap[b.date].push(b);
         });
-        
-        // Get calendar details
-        const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
-        const today = new Date();
-        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        
-        const calendarDays = document.getElementById('calendarDays');
-        if (!calendarDays) return;
-        calendarDays.innerHTML = '';
-        
-        // Previous month days (greyed out)
-        const prevMonthDays = firstDay;
-        for (let i = prevMonthDays - 1; i >= 0; i--) {
-            const day = daysInPrevMonth - i;
-            const div = document.createElement('div');
-            div.className = 'text-center py-3 rounded-xl text-slate-500 text-sm cursor-not-allowed opacity-50';
-            div.textContent = day;
-            calendarDays.appendChild(div);
-        }
-        
-        // Current month days
-        for (let i = 1; i <= daysInMonth; i++) {
-            const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-            const div = document.createElement('div');
-            div.className = 'text-center py-3 rounded-xl text-white text-sm font-medium transition-all duration-200 cursor-pointer hover:bg-slate-700/50';
-            
-            // Check if this date has bookings
-            if (bookingMap[dateStr]) {
-                const count = bookingMap[dateStr].length;
-                // Highlight with different colors based on count
-                if (count >= 3) {
-                    div.className = 'text-center py-3 rounded-xl text-white font-bold bg-indigo-600/50 hover:bg-indigo-600/70 transition-all duration-200 cursor-pointer relative';
-                } else if (count >= 2) {
-                    div.className = 'text-center py-3 rounded-xl text-white font-bold bg-indigo-500/40 hover:bg-indigo-500/60 transition-all duration-200 cursor-pointer relative';
-                } else {
-                    div.className = 'text-center py-3 rounded-xl text-white font-bold bg-indigo-400/30 hover:bg-indigo-400/50 transition-all duration-200 cursor-pointer relative';
-                }
-                
-                div.textContent = i;
-                
-                // Add count badge
-                const badge = document.createElement('span');
-                badge.className = 'absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center shadow-lg';
-                badge.textContent = count;
-                div.appendChild(badge);
-                
-                // Click handler to show bookings for this date
-                div.onclick = (function(date, bookingsList) {
-                    return function() {
-                        showBookingsForDate(date, bookingsList);
-                    };
-                })(dateStr, bookingMap[dateStr]);
-                
-                // Add title attribute for tooltip
-                div.title = `${count} booking${count > 1 ? 's' : ''} on this date`;
-                
-            } else {
-                // No bookings - check if it's today
-                if (dateStr === todayStr) {
-                    div.className = 'text-center py-3 rounded-xl text-indigo-400 font-bold border border-indigo-500/30 bg-indigo-500/10';
-                    div.textContent = i;
-                } else {
-                    div.className = 'text-center py-3 rounded-xl text-slate-300 hover:bg-slate-700/30 transition-all duration-200 cursor-pointer';
-                    div.textContent = i;
-                    // Click to show no bookings message
-                    div.onclick = function() {
-                        showMessage('No bookings on this date', 'info');
-                    };
-                }
-            }
-            
-            calendarDays.appendChild(div);
-        }
-        
-        // Next month days (greyed out)
-        const totalDays = firstDay + daysInMonth;
-        const remainingDays = totalDays % 7 === 0 ? 0 : 7 - (totalDays % 7);
-        for (let i = 1; i <= remainingDays; i++) {
-            const div = document.createElement('div');
-            div.className = 'text-center py-3 rounded-xl text-slate-500 text-sm cursor-not-allowed opacity-50';
-            div.textContent = i;
-            calendarDays.appendChild(div);
-        }
-        
-        // Add legend
-        addCalendarLegend();
-        
-        console.log('✅ Calendar rendered successfully');
+        console.log('📊 Booking map:', bookingMap);
         
     } catch (error) {
-        console.error('Error rendering calendar:', error);
-        const calendarDays = document.getElementById('calendarDays');
-        if (calendarDays) {
-            calendarDays.innerHTML = `
-                <div class="col-span-7 text-center py-8 text-slate-400">
-                    <i class="fas fa-exclamation-circle text-2xl mb-2 block"></i>
-                    Failed to load calendar data
-                </div>
-            `;
+        console.error('❌ Error fetching bookings:', error);
+    }
+    
+    // Previous month days (greyed out)
+    console.log('📅 Adding previous month days...');
+    for (let i = firstDay - 1; i >= 0; i--) {
+        const day = daysInPrevMonth - i;
+        const div = document.createElement('div');
+        div.className = 'text-center py-3 rounded-xl text-slate-500 text-sm opacity-50';
+        div.textContent = day;
+        calendarDays.appendChild(div);
+    }
+    
+    // Current month days
+    console.log('📅 Adding current month days...');
+    for (let i = 1; i <= daysInMonth; i++) {
+        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        const div = document.createElement('div');
+        
+        // Check if this date has bookings
+        if (bookingMap[dateStr]) {
+            const count = bookingMap[dateStr].length;
+            
+            // Color based on count
+            let bgColor = 'bg-indigo-400/30';
+            let hoverColor = 'hover:bg-indigo-400/50';
+            if (count >= 3) {
+                bgColor = 'bg-indigo-600/50';
+                hoverColor = 'hover:bg-indigo-600/70';
+            } else if (count >= 2) {
+                bgColor = 'bg-indigo-500/40';
+                hoverColor = 'hover:bg-indigo-500/60';
+            }
+            
+            div.className = `text-center py-3 rounded-xl text-white font-bold ${bgColor} ${hoverColor} transition-all duration-200 cursor-pointer relative`;
+            div.textContent = i;
+            
+            // Add count badge
+            const badge = document.createElement('span');
+            badge.className = 'absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center shadow-lg';
+            badge.textContent = count;
+            div.appendChild(badge);
+            
+            // Click handler
+            div.onclick = (function(date, bookings) {
+                return function() {
+                    showBookingsForDate(date, bookings);
+                };
+            })(dateStr, bookingMap[dateStr]);
+            
+            div.title = `${count} booking${count > 1 ? 's' : ''} on this date`;
+            
+        } else {
+            // No bookings - check if it's today
+            if (dateStr === todayStr) {
+                div.className = 'text-center py-3 rounded-xl text-indigo-400 font-bold border border-indigo-500/30 bg-indigo-500/10';
+                div.textContent = i;
+            } else {
+                div.className = 'text-center py-3 rounded-xl text-slate-300 hover:bg-slate-700/30 transition-all duration-200 cursor-pointer';
+                div.textContent = i;
+                div.onclick = function() {
+                    showMessage('No bookings on this date', 'info');
+                };
+            }
         }
-    }
-}
-
-/**
- * Add calendar legend
- */
-function addCalendarLegend() {
-    // Check if legend already exists
-    let legend = document.getElementById('calendarLegend');
-    if (legend) {
-        legend.remove();
+        
+        calendarDays.appendChild(div);
     }
     
-    const calendarGrid = document.getElementById('calendarGrid');
-    if (!calendarGrid) return;
+    // Next month days (greyed out)
+    console.log('📅 Adding next month days...');
+    const totalDays = firstDay + daysInMonth;
+    const remainingDays = totalDays % 7 === 0 ? 0 : 7 - (totalDays % 7);
+    for (let i = 1; i <= remainingDays; i++) {
+        const div = document.createElement('div');
+        div.className = 'text-center py-3 rounded-xl text-slate-500 text-sm opacity-50';
+        div.textContent = i;
+        calendarDays.appendChild(div);
+    }
     
-    legend = document.createElement('div');
-    legend.id = 'calendarLegend';
-    legend.className = 'flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-slate-700/50 text-xs text-slate-400';
-    legend.innerHTML = `
-        <span class="flex items-center gap-2">
-            <span class="w-4 h-4 rounded bg-indigo-400/30"></span>
-            <span>1 booking</span>
-        </span>
-        <span class="flex items-center gap-2">
-            <span class="w-4 h-4 rounded bg-indigo-500/40"></span>
-            <span>2 bookings</span>
-        </span>
-        <span class="flex items-center gap-2">
-            <span class="w-4 h-4 rounded bg-indigo-600/50"></span>
-            <span>3+ bookings</span>
-        </span>
-        <span class="flex items-center gap-2">
-            <span class="w-4 h-4 rounded border border-indigo-500/30 bg-indigo-500/10"></span>
-            <span>Today</span>
-        </span>
-        <span class="flex items-center gap-2 ml-auto">
-            <i class="fas fa-mouse-pointer text-indigo-400"></i>
-            <span>Click date to view bookings</span>
-        </span>
-    `;
-    
-    calendarGrid.parentNode.appendChild(legend);
+    console.log('✅ Calendar rendered successfully with', daysInMonth, 'days');
+    console.log('📅 Total child elements in calendar:', calendarDays.children.length);
 }
 
-/**
- * Change month with animation
- */
+// ============================================
+// CHANGE MONTH
+// ============================================
+
 function changeMonth(delta) {
+    console.log('📅 Changing month by:', delta);
     currentMonth += delta;
     if (currentMonth > 11) {
         currentMonth = 0;
@@ -936,28 +933,18 @@ function changeMonth(delta) {
         currentMonth = 11;
         currentYear--;
     }
-    
-    // Add fade animation
-    const calendarDays = document.getElementById('calendarDays');
-    if (calendarDays) {
-        calendarDays.style.opacity = '0';
-        calendarDays.style.transition = 'opacity 0.3s ease';
-    }
+    console.log('📅 New month:', currentMonth, 'Year:', currentYear);
     
     renderCalendar();
-    
-    // Fade in
-    setTimeout(() => {
-        if (calendarDays) {
-            calendarDays.style.opacity = '1';
-        }
-    }, 100);
 }
 
-/**
- * Show bookings for a specific date - Enhanced
- */
+// ============================================
+// SHOW BOOKINGS FOR DATE
+// ============================================
+
 function showBookingsForDate(dateStr, bookings) {
+    console.log('📅 Showing bookings for:', dateStr, bookings);
+    
     // Remove existing modal if any
     const existingModal = document.getElementById('dateBookingsModal');
     if (existingModal) {
@@ -1052,9 +1039,10 @@ function showBookingsForDate(dateStr, bookings) {
     });
 }
 
-/**
- * Close date modal
- */
+// ============================================
+// CLOSE DATE MODAL
+// ============================================
+
 function closeDateModal() {
     const modal = document.getElementById('dateBookingsModal');
     if (modal) {
