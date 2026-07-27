@@ -42,8 +42,8 @@
     <!-- JAVASCRIPT                                   -->
     <!-- ============================================ -->
     
-    <!-- jQuery (optional, for AJAX) -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Font Awesome for icons (if not loaded in header) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
     
     <!-- Custom JavaScript -->
     <script src="script.js"></script>

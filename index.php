@@ -4,11 +4,11 @@
 // Main Page - index.php
 // ============================================
 
-// Include database configuration
-require_once 'config/database.php';
-
 // Start session for flash messages
 session_start();
+
+// Include database configuration
+require_once 'config/database.php';
 
 // Set page title
 $pageTitle = 'Rotaract Social Media Booking';
@@ -17,10 +17,10 @@ $pageTitle = 'Rotaract Social Media Booking';
 // FETCH BOOKINGS FROM DATABASE
 // ============================================
 
-// Get all bookings
+// Get all bookings (order by date and time)
 $bookings = fetchAll("SELECT * FROM bookings ORDER BY date ASC, time_slot ASC");
 
-// Get stats
+// Get statistics for dashboard
 $totalBookings = fetchOne("SELECT COUNT(*) as total FROM bookings");
 $totalBookings = $totalBookings ? $totalBookings['total'] : 0;
 
@@ -32,7 +32,7 @@ $pendingBookings = $pendingBookings ? $pendingBookings['pending'] : 0;
 
 $categories = fetchAll("SELECT category, COUNT(*) as count FROM bookings GROUP BY category");
 
-// Get unique categories for filter
+// Get unique categories for filter dropdown
 $uniqueCategories = [];
 if ($categories) {
     foreach ($categories as $cat) {
@@ -48,7 +48,9 @@ $errorMessage = isset($_SESSION['error']) ? $_SESSION['error'] : null;
 unset($_SESSION['success']);
 unset($_SESSION['error']);
 
-// Include header
+// ============================================
+// INCLUDE HEADER
+// ============================================
 include 'includes/header.php';
 ?>
 
@@ -93,7 +95,7 @@ include 'includes/header.php';
 <!-- FLASH MESSAGES                               -->
 <!-- ============================================ -->
 <?php if ($successMessage): ?>
-    <div class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-3 rounded-xl mb-6 flex items-center justify-between">
+    <div id="message" class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-3 rounded-xl mb-6 flex items-center justify-between">
         <span><i class="fas fa-check-circle mr-2"></i> <?php echo htmlspecialchars($successMessage); ?></span>
         <button onclick="this.parentElement.style.display='none'" class="text-emerald-400/70 hover:text-emerald-400">
             <i class="fas fa-times"></i>
@@ -102,7 +104,7 @@ include 'includes/header.php';
 <?php endif; ?>
 
 <?php if ($errorMessage): ?>
-    <div class="bg-rose-500/10 border border-rose-500/30 text-rose-400 px-4 py-3 rounded-xl mb-6 flex items-center justify-between">
+    <div id="message" class="bg-rose-500/10 border border-rose-500/30 text-rose-400 px-4 py-3 rounded-xl mb-6 flex items-center justify-between">
         <span><i class="fas fa-exclamation-circle mr-2"></i> <?php echo htmlspecialchars($errorMessage); ?></span>
         <button onclick="this.parentElement.style.display='none'" class="text-rose-400/70 hover:text-rose-400">
             <i class="fas fa-times"></i>
@@ -258,7 +260,7 @@ include 'includes/header.php';
         <!-- Submit Button -->
         <div class="md:col-span-2">
             <button type="submit" id="submitBtn"
-                    class="w-full btn-gradient text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2">
+                    class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2">
                 <i class="fas fa-calendar-plus"></i>
                 Book Now
             </button>
@@ -297,17 +299,17 @@ include 'includes/header.php';
         <select id="filterPriority"
                 class="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
             <option value="">All Priorities</option>
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
+            <option value="Low">🟢 Low</option>
+            <option value="Medium">🟡 Medium</option>
+            <option value="High">🔴 High</option>
         </select>
         
         <select id="filterStatus"
                 class="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
             <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Confirmed">Confirmed</option>
-            <option value="Completed">Completed</option>
+            <option value="Pending">⏳ Pending</option>
+            <option value="Confirmed">✅ Confirmed</option>
+            <option value="Completed">✔️ Completed</option>
         </select>
         
         <input type="text" id="filterSearch" placeholder="🔍 Search..." 
