@@ -95,6 +95,132 @@ function attachEventListeners() {
 }
 
 // ============================================
+// CALENDAR NAVIGATION
+// ============================================
+
+function changeMonth(delta) {
+    const monthDisplay = document.getElementById('calendarMonth');
+    if (!monthDisplay) return;
+    
+    // Get current month/year from display
+    const parts = monthDisplay.textContent.trim().split(' ');
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    let currentMonth = monthNames.indexOf(parts[0]);
+    let currentYear = parseInt(parts[1]);
+    
+    // Calculate new month/year
+    currentMonth += delta;
+    if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+    } else if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+    }
+    
+    // Reload page with new month/year parameters
+    window.location.href = `index.php?month=${currentMonth + 1}&year=${currentYear}`;
+}
+
+// ============================================
+// SHOW BOOKING DETAILS FOR A DATE
+// ============================================
+
+function showBookingDetails(dateStr) {
+    // Remove existing modal
+    const existingModal = document.getElementById('dateBookingsModal');
+    if (existingModal) existingModal.remove();
+    
+    // Fetch bookings for this date
+    fetch(`api/get_bookings.php?date=${dateStr}&archived=false`)
+        .then(response => response.json())
+        .then(bookings => {
+            if (bookings.length === 0) {
+                showMessage('No bookings on this date', 'info');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4';
+            modal.id = 'dateBookingsModal';
+            
+            const formattedDate = formatDate(dateStr);
+            const dayName = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
+            
+            let bookingsHtml = '';
+            bookings.forEach(b => {
+                bookingsHtml += `
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-700/50 py-3 hover:bg-slate-700/20 px-3 rounded-lg transition">
+                        <div>
+                            <span class="font-medium text-white">${escapeHtml(b.name)}</span>
+                            <span class="text-slate-400 text-sm ml-2">${escapeHtml(b.time_slot)}</span>
+                            <div class="text-xs text-slate-500 mt-1">
+                                <span class="badge-${b.category.toLowerCase()} px-2 py-0.5 rounded-full text-xs">${escapeHtml(b.category)}</span>
+                                <span class="ml-2">${escapeHtml(b.project_name)}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium ${b.status === 'Pending' ? 'text-amber-400 bg-amber-500/20' : b.status === 'Confirmed' ? 'text-emerald-400 bg-emerald-500/20' : 'text-blue-400 bg-blue-500/20'}">
+                                ${escapeHtml(b.status)}
+                            </span>
+                            <button onclick="closeDateModal(); openEditModal(${b.id});" 
+                                    class="text-indigo-400 hover:text-indigo-300 transition text-sm">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            modal.innerHTML = `
+                <div class="bg-slate-800 rounded-3xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-slate-700 shadow-2xl">
+                    <div class="flex justify-between items-center mb-4 sticky top-0 bg-slate-800 py-2 z-10">
+                        <div>
+                            <h2 class="text-xl font-bold text-white">
+                                <i class="fas fa-calendar-day text-indigo-400 mr-2"></i>
+                                ${dayName}, ${formattedDate}
+                            </h2>
+                            <p class="text-sm text-slate-400">${bookings.length} booking${bookings.length !== 1 ? 's' : ''}</p>
+                        </div>
+                        <button onclick="closeDateModal()" class="text-slate-400 hover:text-white text-2xl transition w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-1">${bookingsHtml}</div>
+                    <div class="mt-4 pt-4 border-t border-slate-700 flex justify-between text-sm text-slate-400">
+                        <span>Total: ${bookings.length} booking${bookings.length !== 1 ? 's' : ''}</span>
+                        <button onclick="closeDateModal()" class="text-indigo-400 hover:text-indigo-300 transition">Close</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close on backdrop click
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeDateModal();
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching bookings:', error);
+            showMessage('Error loading bookings', 'error');
+        });
+}
+
+// ============================================
+// CLOSE DATE MODAL
+// ============================================
+
+function closeDateModal() {
+    const modal = document.getElementById('dateBookingsModal');
+    if (modal) modal.remove();
+}
+
+// ============================================
 // UPDATE TIME SLOT OPTIONS
 // ============================================
 
@@ -712,6 +838,7 @@ async function loadBookings(archived) {
         renderBookingsTable(bookings);
     } catch (error) {
         console.error('Error loading bookings:', error);
+        showMessage('Failed to load archived bookings', 'error');
     }
 }
 
@@ -779,6 +906,9 @@ window.applyFilters = applyFilters;
 window.resetFilters = resetFilters;
 window.checkAvailability = checkAvailability;
 window.toggleArchive = toggleArchive;
+window.showBookingDetails = showBookingDetails;
+window.closeDateModal = closeDateModal;
+window.changeMonth = changeMonth;
 window.showMessage = showMessage;
 
 console.log('✅ All functions loaded successfully!');

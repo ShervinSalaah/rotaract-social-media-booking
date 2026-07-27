@@ -14,6 +14,28 @@ require_once 'config/database.php';
 $pageTitle = 'Rotaract Social Media Booking';
 
 // ============================================
+// CALENDAR NAVIGATION
+// ============================================
+
+// Handle calendar month navigation
+if (isset($_GET['month']) && isset($_GET['year'])) {
+    $_SESSION['calendar_month'] = intval($_GET['month']);
+    $_SESSION['calendar_year'] = intval($_GET['year']);
+} elseif (!isset($_SESSION['calendar_month']) || !isset($_SESSION['calendar_year'])) {
+    $_SESSION['calendar_month'] = date('n');
+    $_SESSION['calendar_year'] = date('Y');
+}
+
+// If month goes out of range, adjust
+if ($_SESSION['calendar_month'] > 12) {
+    $_SESSION['calendar_month'] = 1;
+    $_SESSION['calendar_year']++;
+} elseif ($_SESSION['calendar_month'] < 1) {
+    $_SESSION['calendar_month'] = 12;
+    $_SESSION['calendar_year']--;
+}
+
+// ============================================
 // FETCH BOOKINGS FROM DATABASE
 // ============================================
 
@@ -131,7 +153,7 @@ include 'includes/header.php';
                 <i class="fas fa-chevron-left"></i>
             </button>
             <span id="calendarMonth" class="text-lg font-bold text-white min-w-[150px] text-center">
-                <?php echo date('F Y'); ?>
+                <?php echo date('F Y', mktime(0, 0, 0, $_SESSION['calendar_month'], 1, $_SESSION['calendar_year'])); ?>
             </span>
             <button onclick="changeMonth(1)" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-xl text-sm font-bold text-white transition">
                 <i class="fas fa-chevron-right"></i>
@@ -149,15 +171,16 @@ include 'includes/header.php';
         <div class="text-center text-slate-400 font-bold py-2 text-sm">Sat</div>
     </div>
     
-    <!-- PHP Fallback Calendar -->
+    <!-- Calendar Days -->
     <div id="calendarDays" class="grid grid-cols-7 gap-2 mt-2">
         <?php
-        // Get current month and year
-        $month = date('n');
-        $year = date('Y');
-        $firstDay = date('w', mktime(0, 0, 0, $month, 1, $year));
-        $daysInMonth = date('t', mktime(0, 0, 0, $month, 1, $year));
-        $daysInPrevMonth = date('t', mktime(0, 0, 0, $month - 1, 1, $year));
+        // Use session values for calendar
+        $calendarMonth = $_SESSION['calendar_month'];
+        $calendarYear = $_SESSION['calendar_year'];
+        
+        $firstDay = date('w', mktime(0, 0, 0, $calendarMonth, 1, $calendarYear));
+        $daysInMonth = date('t', mktime(0, 0, 0, $calendarMonth, 1, $calendarYear));
+        $daysInPrevMonth = date('t', mktime(0, 0, 0, $calendarMonth - 1, 1, $calendarYear));
         $today = date('Y-m-d');
         
         // Fetch bookings for calendar
@@ -188,8 +211,9 @@ include 'includes/header.php';
         
         // Current month days
         for ($i = 1; $i <= $daysInMonth; $i++) {
-            $dateStr = $year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT) . '-' . str_pad($i, 2, '0', STR_PAD_LEFT);
+            $dateStr = $calendarYear . '-' . str_pad($calendarMonth, 2, '0', STR_PAD_LEFT) . '-' . str_pad($i, 2, '0', STR_PAD_LEFT);
             $count = isset($bookingCount[$dateStr]) ? $bookingCount[$dateStr] : 0;
+            $isToday = ($dateStr === $today) ? 'today' : '';
             
             if ($count > 0) {
                 // Has bookings
@@ -202,13 +226,13 @@ include 'includes/header.php';
                     $bgColor = 'bg-indigo-400/30';
                 }
                 echo '<div class="text-center py-3 rounded-xl text-white font-bold ' . $bgColor . ' hover:bg-indigo-500/60 transition-all duration-200 cursor-pointer relative" 
-                           onclick="showMessage(\'' . $count . ' booking(s) on ' . date('M d, Y', strtotime($dateStr)) . '\', \'info\')">
+                           onclick="showBookingDetails(\'' . $dateStr . '\')">
                     ' . $i . '
                     <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center shadow-lg">' . $count . '</span>
                 </div>';
             } else {
                 // No bookings
-                if ($dateStr === $today) {
+                if ($isToday) {
                     echo '<div class="text-center py-3 rounded-xl text-indigo-400 font-bold border border-indigo-500/30 bg-indigo-500/10">' . $i . '</div>';
                 } else {
                     echo '<div class="text-center py-3 rounded-xl text-slate-300 hover:bg-slate-700/30 transition-all duration-200 cursor-pointer" 
