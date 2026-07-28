@@ -16,7 +16,40 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEditModal();
     setupDateValidation();
     updateStats();
+    setupSearchListeners();
 });
+
+// ============================================
+// SETUP SEARCH LISTENERS
+// ============================================
+
+function setupSearchListeners() {
+    const searchInput = document.getElementById('filterSearch');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    
+    if (searchInput) {
+        // Enter key support for search
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                console.log('🔍 Enter key pressed, applying filters...');
+                applyFilters();
+            }
+        });
+        console.log('✅ Search Enter key listener attached');
+        
+        // Show/hide clear button
+        if (clearBtn) {
+            searchInput.addEventListener('input', function() {
+                if (this.value.length > 0) {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+            });
+        }
+    }
+}
 
 // ============================================
 // SETUP DATE VALIDATION
@@ -95,7 +128,24 @@ function attachEventListeners() {
 }
 
 // ============================================
-// CALENDAR NAVIGATION - GLOBAL FUNCTIONS
+// CLEAR SEARCH
+// ============================================
+
+function clearSearch() {
+    const searchInput = document.getElementById('filterSearch');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    
+    if (searchInput) {
+        searchInput.value = '';
+        if (clearBtn) {
+            clearBtn.classList.add('hidden');
+        }
+        applyFilters();
+    }
+}
+
+// ============================================
+// CALENDAR NAVIGATION
 // ============================================
 
 function changeMonth(delta) {
@@ -137,7 +187,7 @@ function changeMonth(delta) {
 }
 
 // ============================================
-// ARCHIVE TOGGLE - GLOBAL FUNCTION
+// ARCHIVE TOGGLE
 // ============================================
 
 let showArchived = false;
@@ -562,34 +612,64 @@ async function updateStats() {
 }
 
 // ============================================
-// FILTERS
+// FILTERS - WITH WORKING SEARCH
 // ============================================
 
 function applyFilters() {
+    // Get filter values
     const date = document.getElementById('filterDate').value;
     const category = document.getElementById('filterCategory').value;
     const priority = document.getElementById('filterPriority').value;
     const status = document.getElementById('filterStatus').value;
     const search = document.getElementById('filterSearch').value;
 
+    // Build query string
     const params = new URLSearchParams();
+    
     if (date) params.append('date', date);
     if (category) params.append('category', category);
     if (priority) params.append('priority', priority);
     if (status) params.append('status', status);
-    if (search) params.append('search', search);
+    
+    // IMPORTANT: Always include search if it has any value (including spaces)
+    if (search !== undefined && search !== null) {
+        const searchTrimmed = search.trim();
+        if (searchTrimmed !== '') {
+            params.append('search', searchTrimmed);
+        }
+    }
+    
+    // Always include archived parameter
     params.append('archived', 'false');
 
+    console.log('🔍 Applying filters with params:', params.toString());
+
+    // Fetch filtered results
     fetch(`api/get_bookings.php?${params.toString()}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('📊 Filtered data count:', data.length);
             renderBookingsTable(data);
+            
+            // Show message if no results
+            if (data.length === 0) {
+                showMessage('No bookings found matching your filters', 'info');
+            }
         })
         .catch(error => {
-            console.error('Error filtering bookings:', error);
+            console.error('❌ Error filtering bookings:', error);
             showMessage('Failed to apply filters', 'error');
         });
 }
+
+// ============================================
+// RESET FILTERS
+// ============================================
 
 function resetFilters() {
     document.getElementById('filterDate').value = '';
@@ -597,6 +677,12 @@ function resetFilters() {
     document.getElementById('filterPriority').value = '';
     document.getElementById('filterStatus').value = '';
     document.getElementById('filterSearch').value = '';
+    
+    const clearBtn = document.getElementById('clearSearchBtn');
+    if (clearBtn) {
+        clearBtn.classList.add('hidden');
+    }
+    
     window.location.reload();
 }
 
@@ -959,6 +1045,7 @@ window.closeEditModal = closeEditModal;
 window.deleteBooking = deleteBooking;
 window.applyFilters = applyFilters;
 window.resetFilters = resetFilters;
+window.clearSearch = clearSearch;
 window.checkAvailability = checkAvailability;
 window.showBookingDetails = showBookingDetails;
 window.closeDateModal = closeDateModal;
@@ -967,3 +1054,5 @@ window.showMessage = showMessage;
 console.log('✅ All functions exposed to global scope!');
 console.log('✅ changeMonth available:', typeof window.changeMonth);
 console.log('✅ toggleArchive available:', typeof window.toggleArchive);
+console.log('✅ applyFilters available:', typeof window.applyFilters);
+console.log('✅ clearSearch available:', typeof window.clearSearch);

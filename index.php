@@ -484,8 +484,14 @@ include 'includes/header.php';
             <option value="Completed">✔️ Completed</option>
         </select>
         
-        <input type="text" id="filterSearch" placeholder="🔍 Search..." 
-               class="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+        <div class="relative">
+            <input type="text" id="filterSearch" placeholder="🔍 Search name, project, email..." 
+                   class="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-48">
+            <button onclick="clearSearch()" id="clearSearchBtn" 
+                    class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white hidden">
+                <i class="fas fa-times-circle"></i>
+            </button>
+        </div>
         
         <button onclick="applyFilters()" 
                 class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded-xl text-sm font-bold text-white transition">
