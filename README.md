@@ -389,4 +389,4 @@ error_reporting(E_ALL);
 - GitHub: github.com/ShervinSalaah
 ---
 
-**Built for Rotaract Social Media Management**
+**Built for Rotaract IT Team Recruitment Task**
