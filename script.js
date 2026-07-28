@@ -28,13 +28,12 @@ function setupSearchListeners() {
     const clearBtn = document.getElementById('clearSearchBtn');
     
     if (searchInput) {
-        // Enter key support - FIXED
+        // Enter key support
         searchInput.addEventListener('keydown', function(e) {
-            console.log('🔑 Key pressed in search:', e.key, 'KeyCode:', e.keyCode);
+            console.log('🔑 Key pressed in search:', e.key);
             if (e.key === 'Enter' || e.keyCode === 13) {
                 e.preventDefault();
                 console.log('🔍 Enter key pressed, applying filters...');
-                // Call applyFilters directly
                 applyFilters();
                 return false;
             }
@@ -52,8 +51,6 @@ function setupSearchListeners() {
         }
         
         console.log('✅ Search Enter key listener attached');
-    } else {
-        console.log('⚠️ Search input not found');
     }
 }
 
@@ -526,7 +523,8 @@ function addBookingToTable(booking) {
         'youtube': 'fab fa-youtube text-red-500',
         'facebook': 'fab fa-facebook text-blue-500',
         'instagram': 'fab fa-instagram text-pink-500',
-        'linkedin': 'fab fa-linkedin text-blue-400'
+        'linkedin': 'fab fa-linkedin text-blue-400',
+        'tiktok': 'fab fa-tiktok text-white'
     };
     platforms.forEach(p => {
         const trimmed = p.trim();
@@ -609,7 +607,11 @@ async function updateStats() {
 }
 
 // ============================================
-// FILTERS - WITH WORKING SEARCH
+// FILTERS - WITH PLATFORM FILTER
+// ============================================
+
+// ============================================
+// FILTERS - WITH PLATFORM FILTER (FIXED)
 // ============================================
 
 function applyFilters() {
@@ -620,7 +622,10 @@ function applyFilters() {
     const category = document.getElementById('filterCategory').value;
     const priority = document.getElementById('filterPriority').value;
     const status = document.getElementById('filterStatus').value;
+    const platform = document.getElementById('filterPlatform').value;
     const search = document.getElementById('filterSearch').value;
+
+    console.log('📋 Platform value:', platform);
 
     // Build query string
     const params = new URLSearchParams();
@@ -629,20 +634,18 @@ function applyFilters() {
     if (category) params.append('category', category);
     if (priority) params.append('priority', priority);
     if (status) params.append('status', status);
-    
-    // IMPORTANT: Always include search if it has any value
+    if (platform) {
+        params.append('platform', platform);
+        console.log('📱 Platform filter added:', platform);
+    }
     if (search && search.trim() !== '') {
         params.append('search', search.trim());
-        console.log('🔍 Search term:', search.trim());
     }
-    
-    // Always include archived parameter
     params.append('archived', 'false');
 
     const queryString = params.toString();
-    console.log('🔍 Final query string:', queryString);
+    console.log('🔍 Final URL:', `api/get_bookings.php?${queryString}`);
 
-    // Fetch filtered results
     fetch(`api/get_bookings.php?${queryString}`)
         .then(response => {
             console.log('📡 Response status:', response.status);
@@ -652,16 +655,14 @@ function applyFilters() {
             return response.json();
         })
         .then(data => {
-            console.log('📊 Filtered data count:', data.length);
+            console.log('📊 Results:', data.length);
             renderBookingsTable(data);
-            
-            // Show message if no results
             if (data.length === 0) {
                 showMessage('No bookings found matching your filters', 'info');
             }
         })
         .catch(error => {
-            console.error('❌ Error filtering bookings:', error);
+            console.error('❌ Error:', error);
             showMessage('Failed to apply filters: ' + error.message, 'error');
         });
 }
@@ -677,6 +678,7 @@ function resetFilters() {
     document.getElementById('filterCategory').value = '';
     document.getElementById('filterPriority').value = '';
     document.getElementById('filterStatus').value = '';
+    document.getElementById('filterPlatform').value = '';
     document.getElementById('filterSearch').value = '';
     
     const clearBtn = document.getElementById('clearSearchBtn');
@@ -719,7 +721,8 @@ function renderBookingsTable(bookings) {
             'youtube': 'fab fa-youtube text-red-500',
             'facebook': 'fab fa-facebook text-blue-500',
             'instagram': 'fab fa-instagram text-pink-500',
-            'linkedin': 'fab fa-linkedin text-blue-400'
+            'linkedin': 'fab fa-linkedin text-blue-400',
+            'tiktok': 'fab fa-tiktok text-white'
         };
         platforms.forEach(p => {
             const trimmed = p.trim();
@@ -922,7 +925,8 @@ function updateTableRow(booking) {
         'youtube': 'fab fa-youtube text-red-500',
         'facebook': 'fab fa-facebook text-blue-500',
         'instagram': 'fab fa-instagram text-pink-500',
-        'linkedin': 'fab fa-linkedin text-blue-400'
+        'linkedin': 'fab fa-linkedin text-blue-400',
+        'tiktok': 'fab fa-tiktok text-white'
     };
     platforms.forEach(p => {
         const trimmed = p.trim();

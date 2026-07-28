@@ -66,6 +66,21 @@ if ($categories) {
     }
 }
 
+// Get unique platforms for filter dropdown
+$allPlatforms = [];
+foreach ($bookings as $booking) {
+    if (!empty($booking['platforms'])) {
+        $platforms = explode(',', $booking['platforms']);
+        foreach ($platforms as $p) {
+            $p = trim($p);
+            if (!empty($p) && !in_array($p, $allPlatforms)) {
+                $allPlatforms[] = $p;
+            }
+        }
+    }
+}
+sort($allPlatforms);
+
 // Get flash messages from session
 $successMessage = isset($_SESSION['success']) ? $_SESSION['success'] : null;
 $errorMessage = isset($_SESSION['error']) ? $_SESSION['error'] : null;
@@ -484,8 +499,30 @@ include 'includes/header.php';
             <option value="Completed">✔️ Completed</option>
         </select>
         
+        <!-- Platform Filter -->
+        <select id="filterPlatform" 
+                class="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+            <option value="">All Platforms</option>
+            <?php foreach ($allPlatforms as $platform): ?>
+                <option value="<?php echo htmlspecialchars($platform); ?>">
+                    <?php 
+                    $icons = [
+                        'whatsapp' => '📱',
+                        'youtube' => '🎬',
+                        'facebook' => '📘',
+                        'instagram' => '📸',
+                        'linkedin' => '💼',
+                        'tiktok' => '🎵'
+                    ];
+                    echo isset($icons[$platform]) ? $icons[$platform] : '🔗';
+                    echo ' ' . ucfirst($platform); 
+                    ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+        
         <div class="relative">
-            <input type="text" id="filterSearch" placeholder="🔍 Search name, project, email..." 
+            <input type="text" id="filterSearch" placeholder="🔍 Search..." 
                    class="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-48">
             <button onclick="clearSearch()" id="clearSearchBtn" 
                     class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white hidden">
@@ -493,12 +530,12 @@ include 'includes/header.php';
             </button>
         </div>
         
-        <button onclick="applyFilters()" id = "applyFiltersBtn"
+        <button onclick="applyFilters()" id="applyFiltersBtn"
                 class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded-xl text-sm font-bold text-white transition">
             <i class="fas fa-filter mr-1"></i> Apply Filters
         </button>
         
-        <button onclick="resetFilters()" id = "resetFiltersBtn"
+        <button onclick="resetFilters()" id="resetFiltersBtn"
                 class="bg-slate-700 hover:bg-slate-600 px-6 py-2 rounded-xl text-sm font-bold text-white transition">
             <i class="fas fa-undo mr-1"></i> Reset
         </button>
@@ -541,7 +578,8 @@ include 'includes/header.php';
                                     'youtube' => 'fab fa-youtube text-red-500',
                                     'facebook' => 'fab fa-facebook text-blue-500',
                                     'instagram' => 'fab fa-instagram text-pink-500',
-                                    'linkedin' => 'fab fa-linkedin text-blue-400'
+                                    'linkedin' => 'fab fa-linkedin text-blue-400',
+                                    'tiktok' => 'fab fa-tiktok text-white'
                                 ];
                                 foreach ($platforms as $p) {
                                     $p = trim($p);
