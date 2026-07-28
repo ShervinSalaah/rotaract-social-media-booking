@@ -18,20 +18,8 @@
                     </span>
                 </div>
                 <div class="flex items-center gap-6 text-sm text-slate-500">
-                    <span class="flex items-center gap-2">
-                        <i class="fas fa-database text-indigo-400 text-xs"></i>
-                        <?php
-                        // Show database status
-                        if (function_exists('testDatabaseConnection') && testDatabaseConnection()) {
-                            echo '<span class="text-emerald-400">● Database Connected</span>';
-                        } else {
-                            echo '<span class="text-rose-400">● Database Offline</span>';
-                        }
-                        ?>
-                    </span>
-                    <span class="hidden sm:inline">|</span>
-                    <span class="hidden sm:inline text-slate-600">
-                        <i class="fas fa-code"></i> Built with ❤️
+                    <span class="text-slate-600">
+                        <i class="fas fa-code"></i> Rotaract Club
                     </span>
                 </div>
             </div>
@@ -42,18 +30,11 @@
     <!-- JAVASCRIPT                                   -->
     <!-- ============================================ -->
     
-    <!-- Font Awesome for icons (if not loaded in header) -->
+    <!-- Font Awesome -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
     
     <!-- Custom JavaScript -->
     <script src="script.js"></script>
     
-    <!-- Inline JavaScript for page-specific functionality -->
-    <?php if (isset($pageScript)): ?>
-        <script>
-            <?php echo $pageScript; ?>
-        </script>
-    <?php endif; ?>
-    
-</body>
-</html>
+    </body>
+    </html>

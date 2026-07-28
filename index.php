@@ -156,7 +156,7 @@ include 'includes/header.php';
 <!-- ============================================ -->
 <!-- CALENDAR VIEW                                -->
 <!-- ============================================ -->
-<section class="glass-card rounded-3xl p-6 md:p-8 mb-8">
+<section id="calendarView" class="glass-card rounded-3xl p-6 md:p-8 mb-8">
     <div class="flex flex-wrap justify-between items-center mb-6">
         <h2 class="text-2xl font-bold flex items-center gap-3">
             <span class="w-2 h-8 bg-indigo-500 rounded-full"></span>
@@ -293,7 +293,7 @@ include 'includes/header.php';
 <!-- ============================================ -->
 <!-- BOOKING FORM                                 -->
 <!-- ============================================ -->
-<section class="glass-card rounded-3xl p-6 md:p-8 mb-8">
+<section id="bookingForm" class="glass-card rounded-3xl p-6 md:p-8 mb-8">
     <h2 class="text-2xl font-bold mb-6 flex items-center gap-3">
         <span class="w-2 h-8 bg-indigo-500 rounded-full"></span>
         <i class="fas fa-pen-to-square text-indigo-400"></i>
@@ -375,12 +375,12 @@ include 'includes/header.php';
             </label>
             <select name="category" required
                     class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
-                <option value="Flyer">📄 Flyer</option>
-                <option value="Video">🎬 Video</option>
-                <option value="Reel">📱 Reel</option>
-                <option value="Carousel">🖼️ Carousel</option>
-                <option value="Story">📸 Story</option>
-                <option value="Infographic">📊 Infographic</option>
+                <option value="Flyer">Flyer</option>
+                <option value="Video">Video</option>
+                <option value="Reel">Reel</option>
+                <option value="Carousel">Carousel</option>
+                <option value="Story">Story</option>
+                <option value="Infographic">Infographic</option>
             </select>
         </div>
         
@@ -391,9 +391,9 @@ include 'includes/header.php';
             </label>
             <select name="priority"
                     class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
-                <option value="Low">🟢 Low</option>
-                <option value="Medium" selected>🟡 Medium</option>
-                <option value="High">🔴 High</option>
+                <option value="Low">Low</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="High">High</option>
             </select>
         </div>
         
@@ -450,7 +450,7 @@ include 'includes/header.php';
 <!-- ============================================ -->
 <!-- BOOKINGS DASHBOARD                           -->
 <!-- ============================================ -->
-<section class="glass-card rounded-3xl p-6 md:p-8">
+<section id="bookingsTable" class="glass-card rounded-3xl p-6 md:p-8">
     <div class="flex flex-wrap justify-between items-center mb-6">
         <h2 class="text-2xl font-bold flex items-center gap-3">
             <span class="w-2 h-8 bg-indigo-500 rounded-full"></span>
@@ -486,20 +486,20 @@ include 'includes/header.php';
         <select id="filterPriority"
                 class="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
             <option value="">All Priorities</option>
-            <option value="Low">🟢 Low</option>
-            <option value="Medium">🟡 Medium</option>
-            <option value="High">🔴 High</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
         </select>
         
         <select id="filterStatus"
                 class="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
             <option value="">All Statuses</option>
-            <option value="Pending">⏳ Pending</option>
-            <option value="Confirmed">✅ Confirmed</option>
-            <option value="Completed">✔️ Completed</option>
+            <option value="Pending">Pending</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Completed">Completed</option>
         </select>
         
-        <!-- Platform Filter -->
+        <!-- Platform Filter with Font Awesome Icons -->
         <select id="filterPlatform" 
                 class="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
             <option value="">All Platforms</option>
@@ -507,22 +507,22 @@ include 'includes/header.php';
                 <option value="<?php echo htmlspecialchars($platform); ?>">
                     <?php 
                     $icons = [
-                        'whatsapp' => '📱',
-                        'youtube' => '🎬',
-                        'facebook' => '📘',
-                        'instagram' => '📸',
-                        'linkedin' => '💼',
-                        'tiktok' => '🎵'
+                        'whatsapp' => 'fab fa-whatsapp',
+                        'youtube' => 'fab fa-youtube',
+                        'facebook' => 'fab fa-facebook',
+                        'instagram' => 'fab fa-instagram',
+                        'linkedin' => 'fab fa-linkedin',
+                        'tiktok' => 'fab fa-tiktok'
                     ];
-                    echo isset($icons[$platform]) ? $icons[$platform] : '🔗';
-                    echo ' ' . ucfirst($platform); 
+                    $iconClass = isset($icons[$platform]) ? $icons[$platform] : 'fas fa-share-alt';
+                    echo '<i class="' . $iconClass . ' mr-1"></i> ' . ucfirst($platform); 
                     ?>
                 </option>
             <?php endforeach; ?>
         </select>
         
         <div class="relative">
-            <input type="text" id="filterSearch" placeholder="🔍 Search..." 
+            <input type="text" id="filterSearch" placeholder="Search..." 
                    class="bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-48">
             <button onclick="clearSearch()" id="clearSearchBtn" 
                     class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white hidden">
@@ -676,30 +676,30 @@ include 'includes/header.php';
                 <label class="block text-sm font-medium text-slate-400 mb-1">Category *</label>
                 <select name="category" id="editCategory" required
                         class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500">
-                    <option value="Flyer">📄 Flyer</option>
-                    <option value="Video">🎬 Video</option>
-                    <option value="Reel">📱 Reel</option>
-                    <option value="Carousel">🖼️ Carousel</option>
-                    <option value="Story">📸 Story</option>
-                    <option value="Infographic">📊 Infographic</option>
+                    <option value="Flyer">Flyer</option>
+                    <option value="Video">Video</option>
+                    <option value="Reel">Reel</option>
+                    <option value="Carousel">Carousel</option>
+                    <option value="Story">Story</option>
+                    <option value="Infographic">Infographic</option>
                 </select>
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-400 mb-1">Priority</label>
                 <select name="priority" id="editPriority"
                         class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500">
-                    <option value="Low">🟢 Low</option>
-                    <option value="Medium">🟡 Medium</option>
-                    <option value="High">🔴 High</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
                 </select>
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-400 mb-1">Status</label>
                 <select name="status" id="editStatus"
                         class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500">
-                    <option value="Pending">⏳ Pending</option>
-                    <option value="Confirmed">✅ Confirmed</option>
-                    <option value="Completed">✔️ Completed</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Confirmed">Confirmed</option>
+                    <option value="Completed">Completed</option>
                 </select>
             </div>
             <div class="md:col-span-2">

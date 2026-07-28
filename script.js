@@ -139,6 +139,58 @@ function clearSearch() {
 }
 
 // ============================================
+// SIDEBAR NAVIGATION
+// ============================================
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const menuToggle = document.getElementById('menuToggle');
+    
+    if (!sidebar) return;
+    
+    sidebar.classList.toggle('open');
+    if (overlay) overlay.classList.toggle('active');
+    if (menuToggle) menuToggle.classList.toggle('open');
+    
+    // Prevent body scroll when sidebar is open
+    document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const menuToggle = document.getElementById('menuToggle');
+    
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+    if (menuToggle) menuToggle.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+// Close sidebar on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSidebar();
+    }
+});
+
+// Scroll to section function
+function scrollToSection(id) {
+    const element = document.getElementById(id);
+    if (element) {
+        const offset = 80;
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - offset;
+        
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+        });
+    }
+}
+
+// ============================================
 // CALENDAR NAVIGATION
 // ============================================
 
@@ -610,10 +662,6 @@ async function updateStats() {
 // FILTERS - WITH PLATFORM FILTER
 // ============================================
 
-// ============================================
-// FILTERS - WITH PLATFORM FILTER (FIXED)
-// ============================================
-
 function applyFilters() {
     console.log('🔍 applyFilters() called');
     
@@ -625,8 +673,6 @@ function applyFilters() {
     const platform = document.getElementById('filterPlatform').value;
     const search = document.getElementById('filterSearch').value;
 
-    console.log('📋 Platform value:', platform);
-
     // Build query string
     const params = new URLSearchParams();
     
@@ -634,18 +680,21 @@ function applyFilters() {
     if (category) params.append('category', category);
     if (priority) params.append('priority', priority);
     if (status) params.append('status', status);
-    if (platform) {
-        params.append('platform', platform);
-        console.log('📱 Platform filter added:', platform);
-    }
+    if (platform) params.append('platform', platform);
+    
+    // IMPORTANT: Always include search if it has any value
     if (search && search.trim() !== '') {
         params.append('search', search.trim());
+        console.log('🔍 Search term:', search.trim());
     }
+    
+    // Always include archived parameter
     params.append('archived', 'false');
 
     const queryString = params.toString();
-    console.log('🔍 Final URL:', `api/get_bookings.php?${queryString}`);
+    console.log('🔍 Final query string:', queryString);
 
+    // Fetch filtered results
     fetch(`api/get_bookings.php?${queryString}`)
         .then(response => {
             console.log('📡 Response status:', response.status);
@@ -655,14 +704,16 @@ function applyFilters() {
             return response.json();
         })
         .then(data => {
-            console.log('📊 Results:', data.length);
+            console.log('📊 Filtered data count:', data.length);
             renderBookingsTable(data);
+            
+            // Show message if no results
             if (data.length === 0) {
                 showMessage('No bookings found matching your filters', 'info');
             }
         })
         .catch(error => {
-            console.error('❌ Error:', error);
+            console.error('❌ Error filtering bookings:', error);
             showMessage('Failed to apply filters: ' + error.message, 'error');
         });
 }
@@ -1055,9 +1106,13 @@ window.checkAvailability = checkAvailability;
 window.showBookingDetails = showBookingDetails;
 window.closeDateModal = closeDateModal;
 window.showMessage = showMessage;
+window.toggleSidebar = toggleSidebar;
+window.closeSidebar = closeSidebar;
+window.scrollToSection = scrollToSection;
 
 console.log('✅ All functions exposed to global scope!');
 console.log('✅ changeMonth available:', typeof window.changeMonth);
 console.log('✅ toggleArchive available:', typeof window.toggleArchive);
 console.log('✅ applyFilters available:', typeof window.applyFilters);
 console.log('✅ clearSearch available:', typeof window.clearSearch);
+console.log('✅ toggleSidebar available:', typeof window.toggleSidebar);
