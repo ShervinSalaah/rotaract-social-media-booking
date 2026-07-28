@@ -2,7 +2,7 @@
 
 A comprehensive time slot booking system for Rotaract clubs to manage social media content posting schedules. This application allows members to book time slots for their social media posts with real-time availability checking, duplicate prevention, and an intuitive calendar view.
 
-**Live Demo:** [InfinityFree Link Here]
+**Live Demo:** [Your InfinityFree Link Here]
 
 ---
 
@@ -108,101 +108,118 @@ CREATE TABLE bookings (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY unique_slot (date, time_slot)
 );
-Column Descriptions
-Column	Type	Description	Example
-id	INT AUTO_INCREMENT	Primary key	1
-name	VARCHAR(100)	User's full name	John Doe
-project_name	VARCHAR(200)	Project or post name	Project Alpha
-email	VARCHAR(100)	User's email address	john@email.com
-date	DATE	Booking date	2026-08-10
-time_slot	VARCHAR(50)	Time slot	9:00 AM - 9:30 AM
-category	VARCHAR(50)	Post type	Flyer
-platforms	TEXT	Comma-separated platforms	instagram,facebook
-note	TEXT	Optional additional notes	Campaign launch
-priority	ENUM	Priority level	High
-status	ENUM	Booking status	Confirmed
-archived	TINYINT(1)	0 for active, 1 for archived	0
-created_at	TIMESTAMP	Auto-generated timestamp	2026-07-28 12:04:38
-Unique Constraint
-sql
-UNIQUE KEY unique_slot (date, time_slot)
-This constraint prevents duplicate bookings for the same date and time at the database level.
+```
 
-Deployment
-InfinityFree Deployment Guide
-Step 1: Create InfinityFree Account
-Go to InfinityFree.net
+### Column Descriptions
 
-Sign up and verify your email
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| id | INT AUTO_INCREMENT | Primary key | 1 |
+| name | VARCHAR(100) | User's full name | John Doe |
+| project_name | VARCHAR(200) | Project or post name | Project Alpha |
+| email | VARCHAR(100) | User's email address | john@email.com |
+| date | DATE | Booking date | 2026-08-10 |
+| time_slot | VARCHAR(50) | Time slot | 9:00 AM - 9:30 AM |
+| category | VARCHAR(50) | Post type | Flyer |
+| platforms | TEXT | Comma-separated platforms | instagram,facebook |
+| note | TEXT | Optional additional notes | Campaign launch |
+| priority | ENUM | Priority level | High |
+| status | ENUM | Booking status | Confirmed |
+| archived | TINYINT(1) | 0 for active, 1 for archived | 0 |
+| created_at | TIMESTAMP | Auto-generated timestamp | 2026-07-28 12:04:38 |
 
-Claim a free subdomain (e.g., your-app.rf.gd)
+### Unique Constraint
 
-Step 2: Create Database
-In InfinityFree Control Panel, navigate to MySQL Databases
+The UNIQUE constraint on `(date, time_slot)` prevents duplicate bookings for the same date and time at the database level.
 
-Click Create Database
+---
 
-Enter a database name
+## Deployment
 
-Note down the following credentials:
+### InfinityFree Deployment Guide
 
-Database Host: sql123.infinityfree.com
+#### Step 1: Create InfinityFree Account
 
-Database Name: if0_12345678_rotaract_booking
+1. Go to InfinityFree.net
+2. Sign up and verify your email
+3. Claim a free subdomain (e.g., your-app.rf.gd)
 
-Username: if0_12345678
+#### Step 2: Create Database
 
-Password: (your chosen password)
+1. In InfinityFree Control Panel, navigate to MySQL Databases
+2. Click Create Database
+3. Enter a database name
+4. Note down the following credentials:
+   - Database Host: sql123.infinityfree.com
+   - Database Name: if0_12345678_rotaract_booking
+   - Username: if0_12345678
+   - Password: (your chosen password)
 
-Step 3: Update Database Configuration
-Open config/database.php and update production credentials:
+#### Step 3: Update Database Configuration
 
-php
+Open `config/database.php` and update production credentials:
+
+```php
 if (isProduction()) {
     $db_host = 'sql123.infinityfree.com';
     $db_name = 'if0_12345678_rotaract_booking';
     $db_user = 'if0_12345678';
     $db_password = 'your_password_here';
 }
-Step 4: Upload Files
+```
+
+#### Step 4: Upload Files
+
 Using FileZilla or InfinityFree File Manager:
 
-text
+```
 Host: ftp.your-domain.rf.gd
 Username: your-username
 Password: your-password
 Port: 21
-Upload all files to the htdocs/ folder.
+```
 
-Step 5: Import Database
-In InfinityFree Control Panel, click phpMyAdmin
+Upload all files to the `htdocs/` folder.
 
-Select your database
+#### Step 5: Import Database
 
-Click the Import tab
+1. In InfinityFree Control Panel, click phpMyAdmin
+2. Select your database
+3. Click the Import tab
+4. Choose the `seed.sql` file
+5. Click Go
 
-Choose the seed.sql file
+#### Step 6: Access Application
 
-Click Go
-
-Step 6: Access Application
-text
+```
 http://your-app.rf.gd/index.php
-API Endpoints
-Base URL
-text
-http://your-app.rf.gd/api/
-Endpoints
-Endpoint	Method	Description	Parameters
-/api/get_bookings.php	GET	Fetch all bookings	date, category, priority, status, platform, search, archived, id
-/api/create_booking.php	POST	Create new booking	JSON body with booking data
-/api/update_booking.php	POST	Update existing booking	JSON body with id and updated data
-/api/delete_booking.php	DELETE	Delete booking	id parameter
-/api/check_availability.php	GET	Check slot availability	date, timeSlot
-Example: Create Booking
-Request:
+```
 
-bash
+---
+
+## API Endpoints
+
+### Base URL
+
+```
+http://your-app.rf.gd/api/
+```
+
+### Endpoints Table
+
+| Endpoint | Method | Description | Parameters |
+|----------|--------|-------------|------------|
+| /api/get_bookings.php | GET | Fetch all bookings | date, category, priority, status, platform, search, archived, id |
+| /api/create_booking.php | POST | Create new booking | JSON body with booking data |
+| /api/update_booking.php | POST | Update existing booking | JSON body with id and updated data |
+| /api/delete_booking.php | DELETE | Delete booking | id parameter |
+| /api/check_availability.php | GET | Check slot availability | date, timeSlot |
+
+### Create Booking Example
+
+**Request:**
+
+```http
 POST /api/create_booking.php
 Content-Type: application/json
 
@@ -217,36 +234,51 @@ Content-Type: application/json
     "note": "Campaign launch",
     "priority": "High"
 }
-Response:
+```
 
-json
+**Response:**
+
+```json
 {
     "success": true,
     "message": "Booking created successfully!",
     "booking_id": 6
 }
-Example: Check Availability
-Request:
+```
 
-bash
+### Check Availability Example
+
+**Request:**
+
+```http
 GET /api/check_availability.php?date=2026-08-10&timeSlot=9:00%20AM%20-%209:30%20AM
-Response:
+```
 
-json
+**Response:**
+
+```json
 {
     "available": true,
     "booked": false
 }
-HTTP Status Codes
-Status Code	Description
-200 OK	Request successful
-201 Created	Booking created successfully
-400 Bad Request	Missing or invalid parameters
-404 Not Found	Resource not found
-409 Conflict	Duplicate booking (slot already taken)
-500 Internal Server Error	Server error
-Project Structure
-text
+```
+
+### HTTP Status Codes
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 OK | Request successful |
+| 201 Created | Booking created successfully |
+| 400 Bad Request | Missing or invalid parameters |
+| 404 Not Found | Resource not found |
+| 409 Conflict | Duplicate booking (slot already taken) |
+| 500 Internal Server Error | Server error |
+
+---
+
+## Project Structure
+
+```
 rotaract-social-media-booking/
 ├── api/
 │   ├── get_bookings.php          # Fetch bookings with filters
@@ -268,66 +300,93 @@ rotaract-social-media-booking/
 ├── .htaccess                     # Apache configuration
 ├── test-db.php                   # Database connection test file
 └── README.md                     # Documentation
-Security Features
-Feature	Implementation
-SQL Injection Prevention	PDO Prepared Statements throughout
-Input Sanitization	sanitize() function with htmlspecialchars()
-Email Validation	validateEmail() using PHP's FILTER_VALIDATE_EMAIL
-Date Validation	validateDate() to ensure YYYY-MM-DD format
-XSS Prevention	htmlspecialchars() on all output
-Database Credentials	Stored in .env - not in version control
-CSRF Protection	Session-based flash messages
-Unique Constraint	Database-level duplicate prevention
-Testing
-Manual Testing Checklist
-Test Case	Expected Result	Status
-Create booking	Booking appears in dashboard	Passed
-Duplicate booking	Error message Slot already booked	Passed
-Real-time availability	Shows Available or Booked instantly	Passed
-Edit booking	Changes reflected in table	Passed
-Delete booking	Booking removed with confirmation	Passed
-Filters	Only matching bookings shown	Passed
-Search	Only matching bookings shown	Passed
-Calendar	Dates with bookings highlighted	Passed
-Archive	Completed bookings hidden	Passed
-Past dates	Cannot select past dates	Passed
-Responsive	Works on mobile, tablet, and desktop	Passed
-Demo Data
-The seed.sql file includes 5 demo bookings:
+```
 
-ID	Name	Date	Time Slot	Category	Platforms	Priority	Status
-1	Demo User 1	2026-08-03	9:00 AM - 9:30 AM	Flyer	WhatsApp, Instagram	High	Confirmed
-2	Demo User 2	2026-08-03	10:00 AM - 10:30 AM	Video	YouTube, Facebook	Medium	Pending
-3	Demo User 3	2026-08-04	1:30 PM - 2:00 PM	Reel	Instagram, TikTok	High	Confirmed
-4	Demo User 4	2026-08-05	3:00 PM - 3:30 PM	Carousel	Facebook, LinkedIn	Low	Pending
-5	Demo User 5	2026-08-06	11:00 AM - 11:30 AM	Story	Instagram, Facebook	Medium	Confirmed
-Troubleshooting
-Common Issues
-Issue	Solution
-Database connection failed	Check MySQL is running in XAMPP or verify InfinityFree credentials
-404 Not Found	Ensure files are in the correct directory (htdocs/)
-Booking not saving	Check database permissions and table structure
-Calendar not showing	Clear browser cache (Ctrl+F5)
-Edit modal blank	Check JavaScript console for errors (F12, then Console)
-Duplicate booking allowed	Verify UNIQUE constraint exists on (date, time_slot)
-Debugging
-Enable error reporting by adding to config/database.php:
+---
 
-php
+## Security Features
+
+| Feature | Implementation |
+|---------|----------------|
+| SQL Injection Prevention | PDO Prepared Statements throughout |
+| Input Sanitization | sanitize() function with htmlspecialchars() |
+| Email Validation | validateEmail() using PHP's FILTER_VALIDATE_EMAIL |
+| Date Validation | validateDate() to ensure YYYY-MM-DD format |
+| XSS Prevention | htmlspecialchars() on all output |
+| Database Credentials | Stored in .env - not in version control |
+| CSRF Protection | Session-based flash messages |
+| Unique Constraint | Database-level duplicate prevention |
+
+---
+
+## Testing
+
+### Manual Testing Checklist
+
+| Test Case | Expected Result | Status |
+|-----------|-----------------|--------|
+| Create booking | Booking appears in dashboard | Passed |
+| Duplicate booking | Error message Slot already booked | Passed |
+| Real-time availability | Shows Available or Booked instantly | Passed |
+| Edit booking | Changes reflected in table | Passed |
+| Delete booking | Booking removed with confirmation | Passed |
+| Filters | Only matching bookings shown | Passed |
+| Search | Only matching bookings shown | Passed |
+| Calendar | Dates with bookings highlighted | Passed |
+| Archive | Completed bookings hidden | Passed |
+| Past dates | Cannot select past dates | Passed |
+| Responsive | Works on mobile, tablet, and desktop | Passed |
+
+### Demo Data
+
+The `seed.sql` file includes 5 demo bookings:
+
+| ID | Name | Date | Time Slot | Category | Platforms | Priority | Status |
+|----|------|------|-----------|----------|-----------|----------|--------|
+| 1 | Demo User 1 | 2026-08-03 | 9:00 AM - 9:30 AM | Flyer | WhatsApp, Instagram | High | Confirmed |
+| 2 | Demo User 2 | 2026-08-03 | 10:00 AM - 10:30 AM | Video | YouTube, Facebook | Medium | Pending |
+| 3 | Demo User 3 | 2026-08-04 | 1:30 PM - 2:00 PM | Reel | Instagram, TikTok | High | Confirmed |
+| 4 | Demo User 4 | 2026-08-05 | 3:00 PM - 3:30 PM | Carousel | Facebook, LinkedIn | Low | Pending |
+| 5 | Demo User 5 | 2026-08-06 | 11:00 AM - 11:30 AM | Story | Instagram, Facebook | Medium | Confirmed |
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| Database connection failed | Check MySQL is running in XAMPP or verify InfinityFree credentials |
+| 404 Not Found | Ensure files are in the correct directory (htdocs/) |
+| Booking not saving | Check database permissions and table structure |
+| Calendar not showing | Clear browser cache (Ctrl+F5) |
+| Edit modal blank | Check JavaScript console for errors (F12, then Console) |
+| Duplicate booking allowed | Verify UNIQUE constraint exists on (date, time_slot) |
+
+### Debugging
+
+Enable error reporting by adding to `config/database.php`:
+
+```php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-Error Log Locations:
+```
 
-XAMPP: C:\xampp\php\logs\php_error_log
+**Error Log Locations:**
 
-InfinityFree: Control Panel, then Error Logs
+- XAMPP: `C:\xampp\php\logs\php_error_log`
+- InfinityFree: Control Panel, then Error Logs
 
-Author
-Your Name
+---
 
-Email: your.email@example.com
+## Author
 
-GitHub: github.com/yourusername
+**Shervin Salaah**
 
-LinkedIn: linkedin.com/in/yourprofile
+- Email: shervinsalaah@gmail.com
+- GitHub: github.com/ShervinSalaah
+---
+
+**Built for Rotaract Social Media Management**
