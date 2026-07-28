@@ -15,7 +15,6 @@ header('Content-Type: application/json');
 // ============================================
 
 $filters = [];
-$showArchived = isset($_GET['archived']) && $_GET['archived'] == 'true';
 
 // Support ID filter (for edit modal)
 if (isset($_GET['id']) && !empty($_GET['id'])) {
@@ -43,9 +42,12 @@ if (isset($_GET['status']) && !empty($_GET['status'])) {
 }
 
 // Search filter
-if (isset($_GET['search']) && !empty($_GET['search'])) {
+if (isset($_GET['search']) && $_GET['search'] !== '') {
     $filters['search'] = sanitize($_GET['search']);
 }
+
+// Archived filter
+$showArchived = isset($_GET['archived']) && $_GET['archived'] == 'true';
 
 // ============================================
 // BUILD SQL QUERY
@@ -84,9 +86,19 @@ try {
         $params[':status'] = $filters['status'];
     }
     
-    if (isset($filters['search'])) {
-        $sql .= " AND (name LIKE :search OR project_name LIKE :search)";
-        $params[':search'] = '%' . $filters['search'] . '%';
+    // SEARCH: Search in multiple fields - FIXED
+    if (isset($filters['search']) && !empty($filters['search'])) {
+        $searchTerm = '%' . $filters['search'] . '%';
+        $sql .= " AND (name LIKE :search1 
+                       OR project_name LIKE :search2 
+                       OR email LIKE :search3 
+                       OR category LIKE :search4
+                       OR time_slot LIKE :search5)";
+        $params[':search1'] = $searchTerm;
+        $params[':search2'] = $searchTerm;
+        $params[':search3'] = $searchTerm;
+        $params[':search4'] = $searchTerm;
+        $params[':search5'] = $searchTerm;
     }
     
     // Order by date and time

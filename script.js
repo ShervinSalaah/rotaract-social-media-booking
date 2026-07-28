@@ -28,15 +28,17 @@ function setupSearchListeners() {
     const clearBtn = document.getElementById('clearSearchBtn');
     
     if (searchInput) {
-        // Enter key support for search
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
+        // Enter key support - FIXED
+        searchInput.addEventListener('keydown', function(e) {
+            console.log('🔑 Key pressed in search:', e.key, 'KeyCode:', e.keyCode);
+            if (e.key === 'Enter' || e.keyCode === 13) {
                 e.preventDefault();
                 console.log('🔍 Enter key pressed, applying filters...');
+                // Call applyFilters directly
                 applyFilters();
+                return false;
             }
         });
-        console.log('✅ Search Enter key listener attached');
         
         // Show/hide clear button
         if (clearBtn) {
@@ -48,6 +50,10 @@ function setupSearchListeners() {
                 }
             });
         }
+        
+        console.log('✅ Search Enter key listener attached');
+    } else {
+        console.log('⚠️ Search input not found');
     }
 }
 
@@ -115,16 +121,6 @@ function attachEventListeners() {
         bookingForm.addEventListener('submit', handleFormSubmit);
         console.log('✅ Form submit listener attached');
     }
-
-    const applyFiltersBtn = document.querySelector('[onclick="applyFilters()"]');
-    const resetFiltersBtn = document.querySelector('[onclick="resetFilters()"]');
-    
-    if (applyFiltersBtn) {
-        applyFiltersBtn.addEventListener('click', applyFilters);
-    }
-    if (resetFiltersBtn) {
-        resetFiltersBtn.addEventListener('click', resetFilters);
-    }
 }
 
 // ============================================
@@ -132,6 +128,7 @@ function attachEventListeners() {
 // ============================================
 
 function clearSearch() {
+    console.log('🧹 Clear search clicked');
     const searchInput = document.getElementById('filterSearch');
     const clearBtn = document.getElementById('clearSearchBtn');
     
@@ -616,6 +613,8 @@ async function updateStats() {
 // ============================================
 
 function applyFilters() {
+    console.log('🔍 applyFilters() called');
+    
     // Get filter values
     const date = document.getElementById('filterDate').value;
     const category = document.getElementById('filterCategory').value;
@@ -631,24 +630,24 @@ function applyFilters() {
     if (priority) params.append('priority', priority);
     if (status) params.append('status', status);
     
-    // IMPORTANT: Always include search if it has any value (including spaces)
-    if (search !== undefined && search !== null) {
-        const searchTrimmed = search.trim();
-        if (searchTrimmed !== '') {
-            params.append('search', searchTrimmed);
-        }
+    // IMPORTANT: Always include search if it has any value
+    if (search && search.trim() !== '') {
+        params.append('search', search.trim());
+        console.log('🔍 Search term:', search.trim());
     }
     
     // Always include archived parameter
     params.append('archived', 'false');
 
-    console.log('🔍 Applying filters with params:', params.toString());
+    const queryString = params.toString();
+    console.log('🔍 Final query string:', queryString);
 
     // Fetch filtered results
-    fetch(`api/get_bookings.php?${params.toString()}`)
+    fetch(`api/get_bookings.php?${queryString}`)
         .then(response => {
+            console.log('📡 Response status:', response.status);
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                throw new Error('Network response was not ok: ' + response.status);
             }
             return response.json();
         })
@@ -663,7 +662,7 @@ function applyFilters() {
         })
         .catch(error => {
             console.error('❌ Error filtering bookings:', error);
-            showMessage('Failed to apply filters', 'error');
+            showMessage('Failed to apply filters: ' + error.message, 'error');
         });
 }
 
@@ -672,6 +671,8 @@ function applyFilters() {
 // ============================================
 
 function resetFilters() {
+    console.log('🔄 resetFilters() called');
+    
     document.getElementById('filterDate').value = '';
     document.getElementById('filterCategory').value = '';
     document.getElementById('filterPriority').value = '';

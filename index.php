@@ -493,12 +493,12 @@ include 'includes/header.php';
             </button>
         </div>
         
-        <button onclick="applyFilters()" 
+        <button onclick="applyFilters()" id = "applyFiltersBtn"
                 class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded-xl text-sm font-bold text-white transition">
             <i class="fas fa-filter mr-1"></i> Apply Filters
         </button>
         
-        <button onclick="resetFilters()" 
+        <button onclick="resetFilters()" id = "resetFiltersBtn"
                 class="bg-slate-700 hover:bg-slate-600 px-6 py-2 rounded-xl text-sm font-bold text-white transition">
             <i class="fas fa-undo mr-1"></i> Reset
         </button>
