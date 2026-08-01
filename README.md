@@ -2,7 +2,7 @@
 
 A comprehensive time slot booking system for Rotaract clubs to manage social media content posting schedules. This application allows members to book time slots for their social media posts with real-time availability checking, duplicate prevention, and an intuitive calendar view.
 
-**Live Demo:** [Your InfinityFree Link Here]
+**Live Demo:** https://booking-application-git-main-spark-z.vercel.app/
 
 ---
 
