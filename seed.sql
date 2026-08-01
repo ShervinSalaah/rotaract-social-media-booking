@@ -1,5 +1,11 @@
+-- ============================================
+-- ROTARACT SOCIAL MEDIA BOOKING APP
+-- PostgreSQL Schema for Supabase
+-- ============================================
+
+-- Create bookings table
 CREATE TABLE IF NOT EXISTS bookings (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     name VARCHAR(100) NOT NULL,
     project_name VARCHAR(200) NOT NULL,
     email VARCHAR(100) NOT NULL,
@@ -8,14 +14,14 @@ CREATE TABLE IF NOT EXISTS bookings (
     category VARCHAR(50) NOT NULL,
     platforms TEXT,
     note TEXT,
-    priority ENUM('Low', 'Medium', 'High') DEFAULT 'Medium',
-    status ENUM('Pending', 'Confirmed', 'Completed') DEFAULT 'Pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Prevent duplicate bookings (same date + time)
-    UNIQUE KEY unique_slot (date, time_slot)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+    priority VARCHAR(20) DEFAULT 'Medium',
+    status VARCHAR(20) DEFAULT 'Pending',
+    archived BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT unique_slot UNIQUE (date, time_slot)
+);
 
+-- Create indexes
 CREATE INDEX idx_bookings_date ON bookings(date);
 CREATE INDEX idx_bookings_category ON bookings(category);
 CREATE INDEX idx_bookings_status ON bookings(status);
@@ -24,7 +30,7 @@ CREATE INDEX idx_bookings_priority ON bookings(priority);
 -- ============================================
 -- INSERT 5 DEMO RECORDS
 -- ============================================
-INSERT INTO bookings (name, project_name, email, date, time_slot, category, platforms, note, priority, status) VALUES
+INSERT INTO bookings (name, project_name, email, date, time_slot, category, platforms, note, priority, status, archived) VALUES
 (
     'Demo User 1',
     'Project Alpha',
@@ -35,7 +41,8 @@ INSERT INTO bookings (name, project_name, email, date, time_slot, category, plat
     'whatsapp,instagram',
     'Project discussion for upcoming event',
     'High',
-    'Confirmed'
+    'Confirmed',
+    FALSE
 ),
 (
     'Demo User 2',
@@ -47,7 +54,8 @@ INSERT INTO bookings (name, project_name, email, date, time_slot, category, plat
     'youtube,facebook',
     'Team interview for promotional video',
     'Medium',
-    'Pending'
+    'Pending',
+    FALSE
 ),
 (
     'Demo User 3',
@@ -59,7 +67,8 @@ INSERT INTO bookings (name, project_name, email, date, time_slot, category, plat
     'instagram,tiktok',
     'Technical discussion for social media strategy',
     'High',
-    'Confirmed'
+    'Confirmed',
+    FALSE
 ),
 (
     'Demo User 4',
@@ -71,7 +80,8 @@ INSERT INTO bookings (name, project_name, email, date, time_slot, category, plat
     'facebook,linkedin',
     'Planning meeting for quarterly goals',
     'Low',
-    'Pending'
+    'Pending',
+    FALSE
 ),
 (
     'Demo User 5',
@@ -83,6 +93,11 @@ INSERT INTO bookings (name, project_name, email, date, time_slot, category, plat
     'instagram,facebook',
     'General consultation for content strategy',
     'Medium',
-    'Confirmed'
+    'Confirmed',
+    FALSE
 );
 
+-- ============================================
+-- VERIFY DATA
+-- ============================================
+SELECT * FROM bookings ORDER BY date, time_slot;

@@ -1,3 +1,6 @@
 {
-  "name": "booking-application"
+  "version": 2,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
