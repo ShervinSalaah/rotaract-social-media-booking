@@ -6,7 +6,7 @@
 !.env.example
 
 # ============================================
-# DATABASE CONFIG (If it has credentials)
+# DATABASE CONFIG 
 # ============================================
 config/db_credentials.php
 config/credentials.php
