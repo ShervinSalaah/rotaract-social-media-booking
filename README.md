@@ -2,7 +2,7 @@
 
 A comprehensive time slot booking system for Rotaract clubs to manage social media content posting schedules. This application allows members to book time slots for their social media posts with real-time availability checking, duplicate prevention, and an intuitive calendar view.
 
-**Live Demo:** https://booking-application-git-main-spark-z.vercel.app/
+**Live Demo:** [https://booking-application-git-main-spark-z.vercel.app/](https://booking-application-lovat.vercel.app/)
 
 ---
 
@@ -76,24 +76,24 @@ This application is designed specifically for Rotaract clubs to streamline their
 
 | Component | Technology | Version | Purpose |
 |-----------|------------|---------|---------|
-| Backend | PHP | 8.0+ | Server-side logic and API |
-| Database | MySQL / MariaDB | 5.7+ | Data storage |
+| Backend | Node.js + Express | 20.x | Server-side logic and API |
+| Database | PostgreSQL (Supabase) | 15.x | Data storage |
 | Frontend | HTML5, CSS3, JavaScript | - | User interface |
 | CSS Framework | Tailwind CSS | 3.0+ | Styling and responsiveness |
 | Icons | Font Awesome | 6.5+ | Icon library |
 | Fonts | Google Fonts (Outfit) | - | Typography |
-| Local Server | XAMPP | 8.2+ | Local development |
-| Hosting | InfinityFree | - | Production hosting |
+| Hosting | Vercel | - | Production hosting |
+| Database Hosting | Supabase | - | Cloud PostgreSQL |
 
 ---
 
 ## Database Schema
 
-### Bookings Table
+### Bookings Table (PostgreSQL)
 
 ```sql
 CREATE TABLE bookings (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     name VARCHAR(100) NOT NULL,
     project_name VARCHAR(200) NOT NULL,
     email VARCHAR(100) NOT NULL,
@@ -102,11 +102,11 @@ CREATE TABLE bookings (
     category VARCHAR(50) NOT NULL,
     platforms TEXT,
     note TEXT,
-    priority ENUM('Low', 'Medium', 'High') DEFAULT 'Medium',
-    status ENUM('Pending', 'Confirmed', 'Completed') DEFAULT 'Pending',
-    archived TINYINT(1) DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY unique_slot (date, time_slot)
+    priority VARCHAR(20) DEFAULT 'Medium',
+    status VARCHAR(20) DEFAULT 'Pending',
+    archived BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT unique_slot UNIQUE (date, time_slot)
 );
 ```
 
@@ -114,7 +114,7 @@ CREATE TABLE bookings (
 
 | Column | Type | Description | Example |
 |--------|------|-------------|---------|
-| id | INT AUTO_INCREMENT | Primary key | 1 |
+| id | BIGINT | Primary key (auto-generated) | 1 |
 | name | VARCHAR(100) | User's full name | John Doe |
 | project_name | VARCHAR(200) | Project or post name | Project Alpha |
 | email | VARCHAR(100) | User's email address | john@email.com |
@@ -123,10 +123,10 @@ CREATE TABLE bookings (
 | category | VARCHAR(50) | Post type | Flyer |
 | platforms | TEXT | Comma-separated platforms | instagram,facebook |
 | note | TEXT | Optional additional notes | Campaign launch |
-| priority | ENUM | Priority level | High |
-| status | ENUM | Booking status | Confirmed |
-| archived | TINYINT(1) | 0 for active, 1 for archived | 0 |
-| created_at | TIMESTAMP | Auto-generated timestamp | 2026-07-28 12:04:38 |
+| priority | VARCHAR(20) | Priority level | High |
+| status | VARCHAR(20) | Booking status | Confirmed |
+| archived | BOOLEAN | false for active, true for archived | false |
+| created_at | TIMESTAMPTZ | Auto-generated timestamp | 2026-07-28 12:04:38+00 |
 
 ### Unique Constraint
 
@@ -136,63 +136,53 @@ The UNIQUE constraint on `(date, time_slot)` prevents duplicate bookings for the
 
 ## Deployment
 
-### InfinityFree Deployment Guide
+### Vercel Deployment Guide
 
-#### Step 1: Create InfinityFree Account
+#### Step 1: Create Vercel Account
 
-1. Go to InfinityFree.net
-2. Sign up and verify your email
-3. Claim a free subdomain (e.g., your-app.rf.gd)
+1. Go to [vercel.com](https://vercel.com)
+2. Sign up using GitHub, Google, or email
+3. Verify your account
 
-#### Step 2: Create Database
+#### Step 2: Set Up Supabase Database
 
-1. In InfinityFree Control Panel, navigate to MySQL Databases
-2. Click Create Database
-3. Enter a database name
-4. Note down the following credentials:
-   - Database Host: sql123.infinityfree.com
-   - Database Name: if0_12345678_rotaract_booking
-   - Username: if0_12345678
-   - Password: (your chosen password)
+1. Create a free account at [supabase.com](https://supabase.com)
+2. Create a new project
+3. Note down your **Project URL** and **Anon Key** from Project Settings → API
+4. Run the SQL schema above in the Supabase SQL Editor
 
-#### Step 3: Update Database Configuration
+#### Step 3: Configure Environment Variables
 
-Open `config/database.php` and update production credentials:
+Set these environment variables in your project:
 
-```php
-if (isProduction()) {
-    $db_host = 'sql123.infinityfree.com';
-    $db_name = 'if0_12345678_rotaract_booking';
-    $db_user = 'if0_12345678';
-    $db_password = 'your_password_here';
-}
+**Local Development (`.env` file):**
+```env
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-#### Step 4: Upload Files
+**Vercel Production:**
+1. Go to Vercel Dashboard → Your Project → Settings → Environment Variables
+2. Add `SUPABASE_URL` and `SUPABASE_ANON_KEY`
+3. Click Save
 
-Using FileZilla or InfinityFree File Manager:
+#### Step 4: Deploy to Vercel
+
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Login
+vercel login
+
+# Deploy
+vercel --prod
+```
+
+#### Step 5: Access Application
 
 ```
-Host: ftp.your-domain.rf.gd
-Username: your-username
-Password: your-password
-Port: 21
-```
-
-Upload all files to the `htdocs/` folder.
-
-#### Step 5: Import Database
-
-1. In InfinityFree Control Panel, click phpMyAdmin
-2. Select your database
-3. Click the Import tab
-4. Choose the `seed.sql` file
-5. Click Go
-
-#### Step 6: Access Application
-
-```
-http://your-app.rf.gd/index.php
+https://your-project-name.vercel.app
 ```
 
 ---
@@ -202,25 +192,25 @@ http://your-app.rf.gd/index.php
 ### Base URL
 
 ```
-http://your-app.rf.gd/api/
+https://your-project-name.vercel.app/api/
 ```
 
 ### Endpoints Table
 
 | Endpoint | Method | Description | Parameters |
 |----------|--------|-------------|------------|
-| /api/get_bookings.php | GET | Fetch all bookings | date, category, priority, status, platform, search, archived, id |
-| /api/create_booking.php | POST | Create new booking | JSON body with booking data |
-| /api/update_booking.php | POST | Update existing booking | JSON body with id and updated data |
-| /api/delete_booking.php | DELETE | Delete booking | id parameter |
-| /api/check_availability.php | GET | Check slot availability | date, timeSlot |
+| /api/bookings | GET | Fetch all bookings | date, category, priority, status, platform, search, archived |
+| /api/bookings | POST | Create new booking | JSON body with booking data |
+| /api/bookings/:id | PUT | Update existing booking | JSON body with updated data |
+| /api/bookings/:id | DELETE | Delete booking | - |
+| /api/check-availability | GET | Check slot availability | date, timeSlot |
 
 ### Create Booking Example
 
 **Request:**
 
 ```http
-POST /api/create_booking.php
+POST /api/bookings
 Content-Type: application/json
 
 {
@@ -251,7 +241,7 @@ Content-Type: application/json
 **Request:**
 
 ```http
-GET /api/check_availability.php?date=2026-08-10&timeSlot=9:00%20AM%20-%209:30%20AM
+GET /api/check-availability?date=2026-08-10&timeSlot=9:00%20AM%20-%209:30%20AM
 ```
 
 **Response:**
@@ -281,25 +271,16 @@ GET /api/check_availability.php?date=2026-08-10&timeSlot=9:00%20AM%20-%209:30%20
 ```
 rotaract-social-media-booking/
 ├── api/
-│   ├── get_bookings.php          # Fetch bookings with filters
-│   ├── create_booking.php        # Create new booking
-│   ├── update_booking.php        # Update booking
-│   ├── delete_booking.php        # Delete booking
-│   └── check_availability.php    # Real-time availability check
-├── config/
-│   └── database.php              # Database connection and helper functions
-├── includes/
-│   ├── header.php                # Reusable header with navigation
-│   └── footer.php                # Reusable footer with scripts
-├── index.php                     # Main application page
-├── style.css                     # Custom styles
-├── script.js                     # JavaScript functionality
-├── seed.sql                      # Database schema and demo records
-├── .env.example                  # Environment variables template
-├── .gitignore                    # Git ignore file
-├── .htaccess                     # Apache configuration
-├── test-db.php                   # Database connection test file
-└── README.md                     # Documentation
+│   └── bookings.js              # API routes (GET, POST, PUT, DELETE)
+|
+│─── index.html               # Main application page
+│── style.css                # Custom styles
+│── script.js                # Client-side JavaScript
+├── .env                     # Environment variables template
+├── .gitignore                   # Git ignore file
+├── vercel.json                  # Vercel configuration
+├── package.json                 # Node.js dependencies
+└── README.md                    # Documentation
 ```
 
 ---
@@ -308,13 +289,13 @@ rotaract-social-media-booking/
 
 | Feature | Implementation |
 |---------|----------------|
-| SQL Injection Prevention | PDO Prepared Statements throughout |
-| Input Sanitization | sanitize() function with htmlspecialchars() |
-| Email Validation | validateEmail() using PHP's FILTER_VALIDATE_EMAIL |
-| Date Validation | validateDate() to ensure YYYY-MM-DD format |
-| XSS Prevention | htmlspecialchars() on all output |
-| Database Credentials | Stored in .env - not in version control |
-| CSRF Protection | Session-based flash messages |
+| SQL Injection Prevention | Supabase parameterized queries |
+| Input Sanitization | Sanitization on client and server |
+| Email Validation | `validateEmail()` function |
+| Date Validation | `validateDate()` function |
+| XSS Prevention | `escapeHtml()` on all output |
+| Database Credentials | Stored in environment variables - not in version control |
+| Row Level Security | Supabase RLS policies |
 | Unique Constraint | Database-level duplicate prevention |
 
 ---
@@ -326,8 +307,8 @@ rotaract-social-media-booking/
 | Test Case | Expected Result | Status |
 |-----------|-----------------|--------|
 | Create booking | Booking appears in dashboard | Passed |
-| Duplicate booking | Error message Slot already booked | Passed |
-| Real-time availability | Shows Available or Booked instantly | Passed |
+| Duplicate booking | Error message "Slot already booked" | Passed |
+| Real-time availability | Shows "Available" or "Booked" instantly | Passed |
 | Edit booking | Changes reflected in table | Passed |
 | Delete booking | Booking removed with confirmation | Passed |
 | Filters | Only matching bookings shown | Passed |
@@ -357,27 +338,24 @@ The `seed.sql` file includes 5 demo bookings:
 
 | Issue | Solution |
 |-------|----------|
-| Database connection failed | Check MySQL is running in XAMPP or verify InfinityFree credentials |
-| 404 Not Found | Ensure files are in the correct directory (htdocs/) |
-| Booking not saving | Check database permissions and table structure |
+| Database connection failed | Check Supabase credentials in environment variables |
+| 404 Not Found | Ensure files are in the correct directory |
+| Booking not saving | Check Supabase RLS policies |
 | Calendar not showing | Clear browser cache (Ctrl+F5) |
 | Edit modal blank | Check JavaScript console for errors (F12, then Console) |
-| Duplicate booking allowed | Verify UNIQUE constraint exists on (date, time_slot) |
+| Duplicate booking allowed | Verify UNIQUE constraint exists on `(date, time_slot)` |
 
 ### Debugging
 
-Enable error reporting by adding to `config/database.php`:
+**Enable error reporting in browser:**
+1. Open Developer Tools (F12)
+2. Go to Console tab
+3. Look for error messages
 
-```php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+**Check Vercel logs:**
+```bash
+vercel logs
 ```
-
-**Error Log Locations:**
-
-- XAMPP: `C:\xampp\php\logs\php_error_log`
-- InfinityFree: Control Panel, then Error Logs
 
 ---
 
@@ -386,7 +364,8 @@ error_reporting(E_ALL);
 **Shervin Salaah**
 
 - Email: shervinsalaah@gmail.com
-- GitHub: github.com/ShervinSalaah
+- GitHub: [github.com/ShervinSalaah](https://github.com/ShervinSalaah)
+
 ---
 
 **Built for Rotaract IT Team Recruitment Task**
